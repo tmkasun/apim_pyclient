@@ -1,3 +1,4 @@
+#! /usr/bin/env python3.5
 import random, string
 from api import API
 
@@ -47,7 +48,7 @@ class APITest(object):
 def main():
     tester = APITest()
     tester.api.deleteAll()
-    apis = tester.populateAPIs(5)
+    apis = tester.populateAPIs(15)
     tester.publishAPIs(apis)
 
 

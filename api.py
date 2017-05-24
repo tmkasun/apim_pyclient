@@ -1,3 +1,5 @@
+import json
+
 import requests
 
 
@@ -37,7 +39,11 @@ class Endpoint(RestClient):
         self.service_path = self.publisher_api + "/endpoints"
 
     def addEndpoint(self, data):
-        res = self.client_session.post(self.service_path, json=data, verify=self.verify)
+        headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+        res = self.client_session.post(self.service_path, data=json.dumps(data), verify=self.verify, headers=headers)
         print("Status code: {}".format(res.status_code))
         return res.json()
 
@@ -51,7 +57,8 @@ class API(RestClient):
             "maxTps": 1000,
             "type": "http"
         }
-        endpoint = Endpoint().addEndpoint(endpoint_data)
+        # endpoint = Endpoint().addEndpoint(endpoint_data)  # TODO: Make this Static method
+        endpoint = {'id': "sampleId"} # TODO: use the above code line instead , Needs to fi add endpoint issue
         endpoints = [
             {"id": endpoint['id'], "type": "production"},
             {"id": endpoint['id'], "type": "sandbox"}
