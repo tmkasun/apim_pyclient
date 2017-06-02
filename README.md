@@ -1,6 +1,6 @@
 # Python Client for playing with WSO2 API Manager REST API
 
-I have wrote this simple python client to make it easy to create , delete ,  update lifecycle states of an API for testing purposes.
+I wrote this simple python client to make it easy to create , delete ,  update lifecycle states of an API for testing purposes.
 
 # How to get swagger definitions for Store Publisher REST APIS ?
 
