@@ -20,7 +20,7 @@ class RestClient(object):
             'validity_period': '3600',
             'scopes': 'apim:api_view apim:api_create apim:api_publish apim:tier_view apim:tier_manage apim:subscription_view apim:subscription_block apim:subscribe'
         }
-        login = self.client_session.post(self.base_path + "/publisher/auth/apis/login/token", data=form_data,
+        login = self.client_session.post(self.base_path + "/login/token/publisher", data=form_data,
                                          verify=self.verify)
         if not login.ok:
             print("Error: {}".format(login.reason))
@@ -52,18 +52,13 @@ class API(RestClient):
     def createAPI(self, data):
         endpoint_data = {
             "name": "{}_{}".format(data['name'], data['version']),
-            "endpointConfig": "http://www.sample.com/apis/",
-            "endpointSecurity": "{'enabled':'true','type':'basic','properties':{'username':'admin','password':'admin'}}",
+            "endpointConfig": json.dumps({'serviceUrl': 'http://test.wso2.org/api/endpoint'}),
+            "endpointSecurity": {'enabled': False},
             "maxTps": 1000,
             "type": "http"
         }
         # endpoint = Endpoint().addEndpoint(endpoint_data)  # TODO: Make this Static method
-        endpoint = {'id': "sampleId"} # TODO: use the above code line instead , Needs to fi add endpoint issue
-        endpoints = [
-            {"id": endpoint['id'], "type": "production"},
-            {"id": endpoint['id'], "type": "sandbox"}
-        ]
-        data['endpoint'] = endpoints
+        data['endpoint'] = [{'inline': endpoint_data}]
         res = self.client_session.post(self.publisher_api + "/apis", json=data, verify=self.verify)
         print("Status code: {}".format(res.status_code))
         return res.json()
