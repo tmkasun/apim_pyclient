@@ -1,6 +1,7 @@
 #! /usr/bin/env python3.5
 import random, string
 from api import API
+from simple_endpoint import EndpointHandler
 
 
 class APITest(object):
@@ -47,9 +48,13 @@ class APITest(object):
 
 def main():
     tester = APITest()
+    print("INFO: Deleting existing APIs ...")
     tester.api.deleteAll()
+    print("INFO: Creating new APIs ...")
     apis = tester.populateAPIs(15)
+    print("INFO: Publishing newly created APIs ...")
     tester.publishAPIs(apis)
+    EndpointHandler.run()
 
 
 if __name__ == '__main__':
