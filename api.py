@@ -1,99 +1,133 @@
 import json
+import copy
+from utils.utils import DotDict
+from endpoint import Endpoint
+from restClient import RestClient
 
-import requests
 
+class API(object):
+    def __init__(self, name, version, context, service_url=None, **kwargs):
+        self.client = None  # REST API Client
+        self.id = None
+        self._data = None
 
-class RestClient(object):
-    def __init__(self):
-        self.base_path = "https://localhost:9292"
-        self.api_version = 1.0
-        self.publisher_api = self.base_path + "/api/am/publisher/v{api_version}".format(api_version=self.api_version)
-        self.client_session = requests.Session()
-        self.verify = False
-        self._getAccessToken()
+        self.name = name
+        self.context = context
+        self.version = version
+        self.endpoints = {}
+        if service_url:
+            inline_endpoint_name = "{}_{}".format(Endpoint.CONST.TYPES.SANDBOX, name)
+            self.endpoints[Endpoint.CONST.TYPES.SANDBOX] = Endpoint(inline_endpoint_name, service_url, 'http')
+            inline_endpoint_name = "{}_{}".format(Endpoint.CONST.TYPES.PRODUCTION, name)
+            self.endpoints[Endpoint.CONST.TYPES.PRODUCTION] = Endpoint(inline_endpoint_name, service_url, 'http')
+        if kwargs:
+            self._parse_json(kwargs)
 
-    def _getAccessToken(self):
-        form_data = {
-            'username': 'admin',
-            'password': 'admin',
-            'grant_type': 'password',
-            'validity_period': '3600',
-            'scopes': 'apim:api_view apim:api_create apim:api_publish apim:tier_view apim:tier_manage apim:subscription_view apim:subscription_block apim:subscribe'
+    def set_rest_client(self, client=RestClient()):
+        self.client = client
+
+    def save(self):
+        if self.id:
+            print("WARN: API is already persist")
+            return self
+        res = self.client.session.post(self.client.publisher_api + "/apis", json=self.to_json(),
+                                       verify=self.client.verify)
+        if res.status_code != 201:
+            print(res.json())
+            raise Exception("An error occurred while creating an API CODE: " + res.status_code)
+        self._parse_json(res.json())
+        print("Status code: {}".format(res.status_code))
+        return self
+
+    def to_json(self):
+        temp = {
+            'name': self.name,
+            'version': self.version,
+            'context': self.context,
         }
-        login = self.client_session.post(self.base_path + "/login/token/publisher", data=form_data,
-                                         verify=self.verify)
-        if not login.ok:
-            print("Error: {}".format(login.reason))
-            return False
-        self.access_token = self.client_session.cookies['WSO2_AM_TOKEN_1'] + self.client_session.cookies[
-            'WSO2_AM_TOKEN_2']
-        self.client_session.headers['Authorization'] = 'Bearer ' + self.client_session.cookies['WSO2_AM_TOKEN_1']
-        del self.client_session.cookies['WSO2_AM_TOKEN_1']
-        del self.client_session.cookies['WSO2_AM_TOKEN_2']
-        print("session headers: {}".format(self.client_session.headers))
+        endpoints = []
+        for type, endpoint in self.endpoints.items():
+            serialize_endpoint = {"type": type}
+            if endpoint.id:
+                serialize_endpoint['key'] = endpoint.id
+            else:
+                serialize_endpoint['inline'] = endpoint.to_json()
+            endpoints.append(serialize_endpoint)
+        if len(endpoints):
+            temp['endpoint'] = endpoints
+        return temp
 
+    def _parse_json(self, json_response):
+        self._data = DotDict(json_response)
+        if not self._data.id:
+            raise Exception("JSON response should have id property for a valid API")
+        for key, val in self._data.items():
+            if key == 'endpoint':
+                self._parse_endpoint(val)
+            self.__setattr__(key, val)
 
-class Endpoint(RestClient):
-    def __init__(self):
-        super().__init__()
-        self.service_path = self.publisher_api + "/endpoints"
+    def _parse_endpoint(self, endpoint_json):
+        for endpoint in endpoint_json:
+            self.endpoints[endpoint['type']] = endpoint.get('inline') or endpoint.get('key')
 
-    def addEndpoint(self, data):
-        headers = {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        }
-        res = self.client_session.post(self.service_path, data=json.dumps(data), verify=self.verify, headers=headers)
-        print("Status code: {}".format(res.status_code))
-        return res.json()
+    def set_endpoint(self, endpoint_type, endpoint):
+        if endpoint_type not in Endpoint.CONST.TYPES.values():
+            raise Exception("Endpoint type should be one of these {}".format(Endpoint.CONST.TYPES.values()))
+        if type(endpoint) is not Endpoint:
+            raise Exception("endpoint should be an instance of Endpoint")
+        if endpoint_type != Endpoint.CONST.TYPES.INLINE and not endpoint.id:
+            raise Exception("Global endpoint should have persist before mapping it to an API")
+        self.endpoints[endpoint_type] = endpoint
+        self._data.endpoint = self.endpoints
+        res = self.client.session.put(self.client.publisher_api + "/apis", json=self._data, verify=self.client.verify)
+        return self
 
-
-class API(RestClient):
-    def createAPI(self, data):
-        endpoint_data = {
-            "name": "{}_{}".format(data['name'], data['version']),
-            "endpointConfig": json.dumps({'serviceUrl': 'http://test.wso2.org/api/endpoint'}),
-            "endpointSecurity": {'enabled': False},
-            "maxTps": 1000,
-            "type": "http"
-        }
-        # endpoint = Endpoint().addEndpoint(endpoint_data)  # TODO: Make this Static method
-        data['endpoint'] = [{'inline': endpoint_data}]
-        res = self.client_session.post(self.publisher_api + "/apis", json=data, verify=self.verify)
-        print("Status code: {}".format(res.status_code))
-        return res.json()
-
-    def deleteAPI(self, uuid):
-        res = self.client_session.delete(self.publisher_api + "/apis/{}".format(uuid),
-                                         verify=self.verify)
+    def delete(self):
+        res = self.client.session.delete(self.client.publisher_api + "/apis/{}".format(self.id),
+                                         verify=self.client.verify)
+        if res.status_code != 200:
+            print("Warning Error while deleting the API {}\nERROR: {}".format(self.name, res.content))
         print("Status code: {}".format(res.status_code))
 
-    def getAll(self):
-        res = self.client_session.get(self.publisher_api + "/apis", verify=self.verify)
+    @staticmethod
+    def delete_all(client=RestClient()):
+        res = client.session.get(client.publisher_api + "/apis", verify=client.verify)
+        if not res.status_code == 200:
+            print(res.json())
+            raise Exception("Error getting APIs list")
         print("Status code: {}".format(res.status_code))
-        return res.json()
+        apis_list = res.json()['list']
+        for api in apis_list:
+            res = client.session.delete(client.publisher_api + "/apis/{}".format(api['id']), verify=client.verify)
+            if res.status_code != 200:
+                print("Warning Error while deleting the API {}\nERROR: {}".format(api['name'], res.content))
+            print("Status code: {}".format(res.status_code))
 
-    def deleteAll(self):
-        allApis = self.getAll()
-        for api in allApis['list']:
-            print("Deleting {}".format(api['name']))
-            self.deleteAPI(api['id'])
+    @staticmethod
+    def get_all(client=RestClient()):
+        res = client.session.get(client.publisher_api + "/apis", verify=client.verify)
+        if not res.status_code == 200:
+            print(res.json())
+            raise Exception("Error getting APIs list")
+        print("Status code: {}".format(res.status_code))
+        return [API(**api) for api in res.json()['list']]
 
-    def changeLC(self, apiId, state):
+    def change_lc(self, state):
+        api_id = self.id
         data = {
             "action": state,
-            "apiId": apiId
+            "apiId": api_id
         }
-        lcs = self.client_session.get(self.publisher_api + "/apis/{apiId}/lifecycle".format(apiId=apiId))
+        lcs = self.client.session.get(self.client.publisher_api + "/apis/{apiId}/lifecycle".format(apiId=api_id))
         if lcs.ok:
             lcs = lcs.json()
             available_transitions = [current_state for current_state in lcs['availableTransitionBeanList'] if
                                      current_state['targetState'] == state]
             if len(available_transitions) == 1:
-                res = self.client_session.post(self.publisher_api + "/apis/change-lifecycle", params=data,
-                                               verify=self.verify)
+                res = self.client.session.post(self.client.publisher_api + "/apis/change-lifecycle", params=data,
+                                               verify=self.client.verify)
                 print("Status code: {}".format(res.status_code))
             else:
                 raise ("Invalid transition state valid ones are = {}".format(lcs['availableTransitionBeanList']))
         else:
-            raise ("Can't find Lifecycle for the api {}".format(apiId))
+            raise ("Can't find Lifecycle for the api {}".format(api_id))
