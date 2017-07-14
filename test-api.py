@@ -69,7 +69,7 @@ class APITest(object):
             name = "{}_sample_endpoint_{}".format(random_char, index)
             service_url = "https://sample.knnect.com/api/endpoint/" + name
             max_tps = random.randint(1, 1000)
-            endpoint = Endpoint(name, service_url, "http", max_tps)
+            endpoint = Endpoint(name, "http", service_url, max_tps)
             rand_endpoint = endpoint_types[random.randint(0, 1)]
             endpoint.set_security(rand_endpoint, name, "sample_password")
             endpoint.set_rest_client(self.client)
@@ -89,14 +89,15 @@ def main():
 
     print("INFO: Creating new APIs ...")
     apis = tester.populateAPIs(15)
-
+    api = API.get(apis[0].id)
     print("INFO: Creating new Global endpoints ...")
     endpoints = tester.populate_global_endpoints(25)
+    endpoint = Endpoint.get(endpoints[0].id)
 
     print("INFO: Publishing newly created APIs ...")
     tester.publishAPIs(apis)
 
-    # EndpointHandler.run()
+    EndpointHandler.run()
 
 
 if __name__ == '__main__':

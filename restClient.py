@@ -6,17 +6,10 @@ class RestClient(object):
 
     def __init__(self):
         self.base_path = "https://localhost:9292"
-        self.api_version = 1.0
-        self.publisher_api = self.base_path + "/api/am/publisher/v{api_version}".format(api_version=self.api_version)
         self.session = requests.Session()
         self.verify = False
         self._get_access_token()
         RestClient._client = self
-
-    def __call__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance = super(RestClient, cls).__call__(*args, **kwargs)
-        return cls._instance
 
     def _get_access_token(self):
         form_data = {
