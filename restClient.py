@@ -12,6 +12,8 @@ class RestClient(object):
         RestClient._client = self
 
     def _get_access_token(self):
+        if __name__ != "__main__":
+            return False
         form_data = {
             'username': 'admin',
             'password': 'admin',
@@ -30,3 +32,11 @@ class RestClient(object):
         del self.session.cookies['WSO2_AM_TOKEN_1']
         del self.session.cookies['WSO2_AM_TOKEN_2']
         print("session headers: {}".format(self.session.headers))
+
+# stuff to run always here such as class/def
+def main():
+    pass
+
+if __name__ == "__main__":
+    # stuff only to run when not called via 'import' here
+    main()

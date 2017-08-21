@@ -20,8 +20,8 @@ class APITest(object):
             "visibility": "PUBLIC",
             "businessInformation": {},
             "corsConfiguration": {}
-        :param count: 
-        :return: 
+        :param count:
+        :return:
         """
         template = {
             "name": None,
@@ -80,7 +80,6 @@ class APITest(object):
 
 def main():
     tester = APITest()
-
     print("INFO: Deleting existing APIs ...")
     tester.delete_all()
 
