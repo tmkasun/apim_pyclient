@@ -34,8 +34,9 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
         self.wfile.write("")
 
     def common_handler(self):
-        self.send_response(HTTPStatus.FORBIDDEN)
-        # self.send_response(HTTPStatus.OK)
+        # self.send_response(HTTPStatus.FORBIDDEN)
+        self.send_response(HTTPStatus.OK)
+        print(self.path)
         self.send_header("Content-type", "application/json")
         requested_origin = self.headers.get("Origin")
         self.send_header("Access-Control-Allow-Origin", requested_origin)
@@ -67,7 +68,7 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
         httpd = socketserver.TCPServer(('', port), EndpointHandler)
         httpd.serve_forever()
 
-    port = 8002
+    port = 8000
 
 
 def main():
