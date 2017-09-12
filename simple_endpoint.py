@@ -1,6 +1,7 @@
 import json
 from http import server, HTTPStatus
 import socketserver
+import ssl
 
 
 class EndpointHandler(server.BaseHTTPRequestHandler):
@@ -66,9 +67,13 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
         print('INFO: Mock Endpoint Server listening on localhost:{}...'.format(port))
         socketserver.TCPServer.allow_reuse_address = True
         httpd = socketserver.TCPServer(('', port), EndpointHandler)
+        if EndpointHandler.secured:
+            httpd.socket = ssl.wrap_socket(httpd.socket, server_side=True,
+                                           certfile='yourpemfile.pem')
         httpd.serve_forever()
 
     port = 8000
+    secured = True
 
 
 def main():
