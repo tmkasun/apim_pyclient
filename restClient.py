@@ -12,8 +12,6 @@ class RestClient(object):
         RestClient._client = self
 
     def _get_access_token(self):
-        if __name__ != "__main__":
-            return False
         form_data = {
             'username': 'admin',
             'password': 'admin',
@@ -26,16 +24,20 @@ class RestClient(object):
         if not login.ok:
             print("Error: {}".format(login.reason))
             return False
-        self.access_token = self.session.cookies['WSO2_AM_TOKEN_1'] + self.session.cookies[
-            'WSO2_AM_TOKEN_2']
-        self.session.headers['Authorization'] = 'Bearer ' + self.session.cookies['WSO2_AM_TOKEN_1']
-        del self.session.cookies['WSO2_AM_TOKEN_1']
-        del self.session.cookies['WSO2_AM_TOKEN_2']
+        # This is to ignore the environment prefix and get the token value
+        token_part_1 = [v for k, v in self.session.cookies.iteritems() if k.startswith("WSO2_AM_TOKEN_1")].pop()
+        token_part_2 = [v for k, v in self.session.cookies.iteritems() if k.startswith("WSO2_AM_TOKEN_2")].pop()
+        self.access_token = token_part_1 + token_part_2
+        self.session.headers['Authorization'] = 'Bearer ' + token_part_1
+        # del self.session.cookies['WSO2_AM_TOKEN_1']
+        # del self.session.cookies['WSO2_AM_TOKEN_2']
         print("session headers: {}".format(self.session.headers))
+
 
 # stuff to run always here such as class/def
 def main():
     pass
+
 
 if __name__ == "__main__":
     # stuff only to run when not called via 'import' here

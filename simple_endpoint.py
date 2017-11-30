@@ -64,16 +64,16 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
     @staticmethod
     def run():
         port = EndpointHandler.port
-        print('INFO: Mock Endpoint Server listening on localhost:{}...'.format(port))
+        print('INFO: (Secured: {})Mock Endpoint Server listening on localhost:{}...'.format(EndpointHandler.secured,
+                                                                                            port))
         socketserver.TCPServer.allow_reuse_address = True
         httpd = socketserver.TCPServer(('', port), EndpointHandler)
         if EndpointHandler.secured:
-            httpd.socket = ssl.wrap_socket(httpd.socket, server_side=True,
-                                           certfile='yourpemfile.pem')
+            httpd.socket = ssl.wrap_socket(httpd.socket, server_side=True, certfile='yourpemfile.pem')
         httpd.serve_forever()
 
     port = 8000
-    secured = True
+    secured = False
 
 
 def main():
