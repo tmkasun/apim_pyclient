@@ -6,11 +6,15 @@ class Resource(object):
     """
     Parent for API and Endpoint resources , implement generalize delete type method here
     """
-    BASE = "https://localhost:9292"
+    BASE = "https://localhost:9292/api/am/"
     VERSION = 1.0
-    API = BASE + "/api/am/publisher/v{api_version}".format(api_version=VERSION)
+    APPLICATION = "publisher"
     RESOURCE = ''
-    ENDPOINT = API + RESOURCE
+
+    def __init__(self):
+        self._data = None  # raw Resource data
+        self.id = None  # Resource ID, None until persist via REST API, call save() will set ID
+        self.client = None
 
     def delete(self):
         pass
@@ -31,7 +35,8 @@ class Resource(object):
 
     @classmethod
     def get_endpoint(cls):
-        return cls.API + cls.RESOURCE
+        return cls.BASE + "{application}/v{api_version}".format(api_version=cls.VERSION,
+                                                                application=cls.APPLICATION) + cls.RESOURCE
 
     @classmethod
     def get(cls, resource_id, client=RestClient()):

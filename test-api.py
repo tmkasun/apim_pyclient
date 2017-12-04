@@ -4,12 +4,14 @@ from api import API
 from endpoint import Endpoint
 from restClient import RestClient
 from simple_endpoint import EndpointHandler
+from application import Application
 
 
 class APITest(object):
     def __init__(self, debug=True):
         self.debub = debug
         self.client = RestClient()
+        self.store_client = RestClient("store")  # TODO: Move this to map to make it extensible
 
     def populateAPIs(self, count=10):
         """
@@ -77,6 +79,35 @@ class APITest(object):
             endpoints.append(endpoint)
         return endpoints
 
+    def create_application(self, count=2):
+        """
+        "apiDefinition": "{ \"paths\": { \"/*\": { \"get\": { \"description\": \"Global Get\" } } }, \"swagger\": \"2.0\" }",
+            "cacheTimeout": 10,
+            "transport": ["https"],
+            "policies": ["Unlimited"],
+            "visibility": "PUBLIC",
+            "businessInformation": {},
+            "corsConfiguration": {}
+        :param count:
+        :return:
+        """
+        template = {
+            "name": None,
+            "description": None,
+            "throttlingTier": "50PerMin"
+        }
+        apps = []
+        for index in range(count):
+            random_char = random.choice(string.ascii_lowercase) + random.choice(string.ascii_lowercase)
+            random_name = "{}_sample_app_{}".format(random_char, index)
+            template['name'] = random_name
+            template['description'] = "Sample description for " + random_name
+            app = Application(**template)
+            app.set_rest_client(self.store_client)
+            app.save()
+            apps.append(app)
+        return apps
+
 
 def main():
     tester = APITest()
@@ -87,12 +118,15 @@ def main():
     tester.delete_all_endpoints()
 
     print("INFO: Creating new APIs ...")
-    apis = tester.populateAPIs(15)
+    apis = tester.populateAPIs(2)
     api = API.get(apis[0].id)
     print("INFO: Creating new Global endpoints ...")
-    endpoints = tester.populate_global_endpoints(25)
+    endpoints = tester.populate_global_endpoints(2)
     endpoint = Endpoint.get(endpoints[0].id)
 
+
+    # print("INFO: Creating new Store Application ...")
+    # endpoints = tester.create_application(2)
     print("INFO: Publishing newly created APIs ...")
     tester.publishAPIs(apis)
 

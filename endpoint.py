@@ -22,10 +22,7 @@ class Endpoint(Resource):
         super().__init__()
         if type not in ['http', 'https']:
             raise Exception("endpoint_type should be either http or https")
-        self.id = None  # None until persist via REST API, call save() will set ID
-        self._data = None  # raw endpoint data
 
-        self.client = None
         self.endpointConfig = {'service_url': service_url}
         self.endpointSecurity = {'enabled': False}
         self.name = name
