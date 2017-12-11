@@ -73,7 +73,23 @@ class API(Resource):
             raise Exception("Global endpoint should have persist before mapping it to an API")
         self.endpoint[endpoint_type] = endpoint
         self._data.endpoint = self.endpoint
-        res = self.client.session.put(API.get_endpoint(), json=self._data, verify=self.client.verify)
+        res = self.client.session.put(API.get_endpoint() + "/" + self.id, json=self._data, verify=self.client.verify)
+        if res.status_code != 200:
+            print("Something went wrong when updating endpoints")
+            print(res)
+        return self
+
+    def set_policies(self, policy_data):
+        self.policies = self.policies if self.policies else []
+        if type(policy_data) is list:
+            self.policies.extend(policy_data)
+        else:
+            self.policies.append(policy_data)
+        self._data["policies"] = self.policies
+        res = self.client.session.put(API.get_endpoint() + "/" + self.id, json=self._data, verify=self.client.verify)
+        if res.status_code != 200:
+            print("Something went wrong when updating policies")
+            print(res)
         return self
 
     def delete(self):

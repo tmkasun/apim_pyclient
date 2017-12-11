@@ -53,11 +53,11 @@ class Application(Resource):
         res = client.session.get(Application.get_endpoint(), verify=client.verify)
         if not res.status_code == 200:
             print(res.json())
-            raise Exception("Error getting APIs list")
+            raise Exception("Error getting Applications list")
         print("Status code: {}".format(res.status_code))
         apps_list = res.json()['list']
         for app in apps_list:
-            res = client.session.delete(Application.get_endpoint() + "/{}".format(app['id']), verify=client.verify)
+            res = client.session.delete(Application.get_endpoint() + "/{}".format(app['applicationId']), verify=client.verify)
             if res.status_code != 200:
                 print("Warning Error while deleting the API {}\nERROR: {}".format(app['name'], res.content))
             print("Status code: {}".format(res.status_code))

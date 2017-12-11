@@ -29,8 +29,9 @@ class APITest(object):
             "name": None,
             "context": None,
             "version": "1.0.0",
-            "service_url": "http://sample.knnect.com/api/endpoint"
+            "service_url": "http://sample.knnect.com/api/endpoint",
         }
+        policies = ["Silver", "Bronze", "Unlimited"]
         apis = []
         for index in range(count):
             random_char = random.choice(string.ascii_lowercase) + random.choice(string.ascii_lowercase)
@@ -40,6 +41,7 @@ class APITest(object):
             api = API(**template)
             api.set_rest_client(self.client)
             api.save()
+            api.set_policies(policies)
             apis.append(api)
         return apis
 
@@ -62,6 +64,9 @@ class APITest(object):
 
     def delete_all_endpoints(self):
         Endpoint.delete_all(self.client)
+
+    def delete_all_applications(self):
+        Application.delete_all(self.store_client)
 
     def populate_global_endpoints(self, count=20):
         endpoint_types = ['basic', 'digest']
@@ -110,25 +115,23 @@ class APITest(object):
 
 
 def main():
-    tester = APITest()
-    print("INFO: Deleting existing APIs ...")
-    tester.delete_all()
+    # tester = APITest()
+    # print("INFO: Deleting existing APIs ...")
+    # tester.delete_all()
+    # print("INFO: Deleting existing Endpoints ...")
+    # tester.delete_all_endpoints()
+    # print("INFO: Creating new APIs ...")
+    # apis = tester.populateAPIs(2)
+    # api = API.get(apis[0].id)
+    # print("INFO: Creating new Global endpoints ...")
+    # endpoints = tester.populate_global_endpoints(2)
+    # endpoint = Endpoint.get(endpoints[0].id)
+    # print("INFO: Publishing newly created APIs ...")
+    # tester.publishAPIs(apis)
 
-    print("INFO: Deleting existing Endpoints ...")
-    tester.delete_all_endpoints()
-
-    print("INFO: Creating new APIs ...")
-    apis = tester.populateAPIs(2)
-    api = API.get(apis[0].id)
-    print("INFO: Creating new Global endpoints ...")
-    endpoints = tester.populate_global_endpoints(2)
-    endpoint = Endpoint.get(endpoints[0].id)
-
-
-    # print("INFO: Creating new Store Application ...")
-    # endpoints = tester.create_application(2)
-    print("INFO: Publishing newly created APIs ...")
-    tester.publishAPIs(apis)
+    print("INFO: Creating new Store Application ...")
+    tester.delete_all_applications()
+    applications = tester.create_application(15)
 
     EndpointHandler.run()
 

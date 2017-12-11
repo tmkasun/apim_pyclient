@@ -30,7 +30,7 @@ class RestClient(object):
             print("Error: {}".format(login.reason))
             return False
         # This is to ignore the environment prefix and get the token value
-        token_part_1 = [v for k, v in self.session.cookies.iteritems() if k.startswith("WSO2_AM_TOKEN_1")].pop()
+        token_part_1 = login.json()['partialToken']
         token_part_2 = [v for k, v in self.session.cookies.iteritems() if k.startswith("WSO2_AM_TOKEN_2")].pop()
         self.access_token = token_part_1 + token_part_2
         self.session.headers['Authorization'] = 'Bearer ' + token_part_1
