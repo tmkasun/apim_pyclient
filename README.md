@@ -6,7 +6,7 @@ I wrote this simple python client to make it easy to create , delete ,  update l
 
 Start [WSO2 API Manager](http://wso2.com/api-management/) server. You can get the swagger definitions for store and publisher REST APIs in following locations.
 
-* Store : https://localhost:9292/api/am/store/v1.0/apis/swagger.json
-* Publisher : https://localhost:9292/api/am/publisher/v1.0/apis/swagger.json
+* Store : https://localhost:9443/api/am/store/v1.0/apis/swagger.json
+* Publisher : https://localhost:9443/api/am/publisher/v1.0/apis/swagger.json
 
 You need to change the `API version` , `hostname` and `port` accordingly.

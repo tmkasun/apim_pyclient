@@ -1,4 +1,5 @@
 import requests
+from configs import default
 
 
 class RestClient(object):
@@ -9,7 +10,8 @@ class RestClient(object):
     }
 
     def __init__(self, application="publisher"):
-        self.base_path = "https://localhost:9292"
+        self.base_path = "https://{host}:{port}".format(
+            host=default['connection']['hostname'], port=default['connection']['port'])
         self.session = requests.Session()
         self.verify = False
         self.application = application
@@ -24,14 +26,17 @@ class RestClient(object):
             'validity_period': '3600',
             'scopes': RestClient.get_scopes_for_app(self.application)
         }
-        login_endpoint = self.base_path + "/login/token/{application}".format(application=self.application)
-        login = self.session.post(login_endpoint, data=form_data, verify=self.verify)
+        login_endpoint = self.base_path + \
+            "/login/token/{application}".format(application=self.application)
+        login = self.session.post(
+            login_endpoint, data=form_data, verify=self.verify)
         if not login.ok:
             print("Error: {}".format(login.reason))
             return False
         # This is to ignore the environment prefix and get the token value
         token_part_1 = login.json()['partialToken']
-        token_part_2 = [v for k, v in self.session.cookies.iteritems() if k.startswith("WSO2_AM_TOKEN_2")].pop()
+        token_part_2 = [v for k, v in self.session.cookies.iteritems(
+        ) if k.startswith("WSO2_AM_TOKEN_2")].pop()
         self.access_token = token_part_1 + token_part_2
         self.session.headers['Authorization'] = 'Bearer ' + token_part_1
         print("session headers: {}".format(self.session.headers))

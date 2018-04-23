@@ -11,6 +11,15 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
     def do_POST(self):
         self.common_handler()
 
+    def do_DELETE(self):
+        self.common_handler()
+
+    def do_PATCH(self):
+        self.common_handler()
+
+    def do_HEAD(self):
+        self.common_handler()
+
     def do_PUT(self):
         self.common_handler()
 
@@ -38,7 +47,7 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
         # self.send_response(HTTPStatus.FORBIDDEN)
         self.send_response(HTTPStatus.OK)
         print(self.path)
-        self.send_header("Content-type", "application/json")
+        self.send_header("Content-type", "application/soap+xml")
         requested_origin = self.headers.get("Origin")
         self.send_header("Access-Control-Allow-Origin", requested_origin)
         self.send_header("Access-Control-Allow-Credentials", "true")
@@ -59,6 +68,7 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
             'request_headers': request_headers
         }
         jresponse = json.dumps(response)
+        print(response)
         self.wfile.write(str.encode(jresponse))
 
     @staticmethod

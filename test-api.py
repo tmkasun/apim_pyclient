@@ -115,19 +115,20 @@ class APITest(object):
 
 
 def main():
-    # tester = APITest()
-    # print("INFO: Deleting existing APIs ...")
-    # tester.delete_all()
-    # print("INFO: Deleting existing Endpoints ...")
-    # tester.delete_all_endpoints()
-    # print("INFO: Creating new APIs ...")
-    # apis = tester.populateAPIs(2)
-    # api = API.get(apis[0].id)
-    # print("INFO: Creating new Global endpoints ...")
-    # endpoints = tester.populate_global_endpoints(2)
-    # endpoint = Endpoint.get(endpoints[0].id)
-    # print("INFO: Publishing newly created APIs ...")
-    # tester.publishAPIs(apis)
+    tester = APITest()
+
+    print("INFO: Deleting existing APIs ...")
+    tester.delete_all()
+    print("INFO: Deleting existing Endpoints ...")
+    tester.delete_all_endpoints()
+    print("INFO: Creating new APIs ...")
+    apis = tester.populateAPIs(20)
+    api = API.get(apis[0].id)
+    print("INFO: Creating new Global endpoints ...")
+    endpoints = tester.populate_global_endpoints(10)
+    endpoint = Endpoint.get(endpoints[0].id)
+    print("INFO: Publishing newly created APIs ...")
+    tester.publishAPIs(apis)
 
     print("INFO: Creating new Store Application ...")
     tester.delete_all_applications()
