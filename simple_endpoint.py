@@ -45,9 +45,10 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
 
     def common_handler(self):
         # self.send_response(HTTPStatus.FORBIDDEN)
+        # self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
         self.send_response(HTTPStatus.OK)
-        print(self.path)
-        self.send_header("Content-type", "application/soap+xml")
+        #print(self.path)
+        self.send_header("Content-type", "application/json")
         requested_origin = self.headers.get("Origin")
         self.send_header("Access-Control-Allow-Origin", requested_origin)
         self.send_header("Access-Control-Allow-Credentials", "true")
@@ -68,7 +69,7 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
             'request_headers': request_headers
         }
         jresponse = json.dumps(response)
-        print(response)
+        #print(response)
         self.wfile.write(str.encode(jresponse))
 
     @staticmethod
