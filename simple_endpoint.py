@@ -87,19 +87,17 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
                 httpd.socket, server_side=True, certfile='yourpemfile.pem')
         httpd.serve_forever()
 
+    """
+            while True:
+                line = self.rfile.readline().decode("UTF-8").strip()
+                if(len(line) == 0):
+                    break
+                request_body += line
+    """
+
     def getBody(self):
-        request_body = ""
         content_length = int(self.headers.get("Content-Length", 0))
-        if content_length == 0:
-            return None
-            # while True:
-            #     line = self.rfile.readline().decode("UTF-8").strip()
-            #     if(len(line) == 0):
-            #         break
-            #     request_body += line
-        else:
-            request_body = self.rfile.read(content_length).decode("UTF-8")
-        return request_body
+        return None if content_length == 0 else self.rfile.read(content_length).decode("UTF-8")
 
     port = 8000
     secured = False
