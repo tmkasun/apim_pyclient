@@ -47,7 +47,7 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
         # self.send_response(HTTPStatus.FORBIDDEN)
         # self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
         self.send_response(HTTPStatus.OK)
-        #print(self.path)
+        # print(self.path)
         self.send_header("Content-type", "application/json")
         requested_origin = self.headers.get("Origin")
         self.send_header("Access-Control-Allow-Origin", requested_origin)
@@ -56,6 +56,7 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
                          'tmkasun_sample="KasunThennakoon"; Path=/apis; HttpOnly; Domain=localhost')
         self.end_headers()
         request_headers = {}
+        request_body = self.getBody()
         for header in self.headers._headers:
             request_headers[header[0]] = header[1]
         response = {
@@ -66,10 +67,12 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
                 'port': self.client_address[1]
             },
             'path': self.path,
-            'request_headers': request_headers
+            'HTTP Method': self.command,
+            'request_headers': request_headers,
+            'body': request_body
         }
         jresponse = json.dumps(response)
-        #print(response)
+        # print(response)
         self.wfile.write(str.encode(jresponse))
 
     @staticmethod
@@ -80,8 +83,23 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
         socketserver.TCPServer.allow_reuse_address = True
         httpd = socketserver.TCPServer(('', port), EndpointHandler)
         if EndpointHandler.secured:
-            httpd.socket = ssl.wrap_socket(httpd.socket, server_side=True, certfile='yourpemfile.pem')
+            httpd.socket = ssl.wrap_socket(
+                httpd.socket, server_side=True, certfile='yourpemfile.pem')
         httpd.serve_forever()
+
+    def getBody(self):
+        request_body = ""
+        content_length = int(self.headers.get("Content-Length", 0))
+        if content_length == 0:
+            return None
+            # while True:
+            #     line = self.rfile.readline().decode("UTF-8").strip()
+            #     if(len(line) == 0):
+            #         break
+            #     request_body += line
+        else:
+            request_body = self.rfile.read(content_length).decode("UTF-8")
+        return request_body
 
     port = 8000
     secured = False
