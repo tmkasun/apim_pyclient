@@ -96,7 +96,17 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
     """
 
     def getBody(self):
-        content_length = int(self.headers.get("Content-Length", 0))
+        content_length = int(self.headers.get("content-length", -1))
+        content_type = self.headers.get("content-type", -1)
+        method = self.command
+        if content_length == -1 and method in ["POST", "PUT", "PATCH"] and content_type != -1:
+            request_body = ""
+            while True:
+                line = self.rfile.readline().decode("UTF-8").strip()
+                if(len(line) == 0):
+                    break
+                request_body += line
+            return request_body
         return None if content_length == 0 else self.rfile.read(content_length).decode("UTF-8")
 
     port = 8000
