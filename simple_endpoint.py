@@ -1,4 +1,7 @@
 import json
+import base64
+import time
+import python_digest
 from http import server, HTTPStatus
 import socketserver
 import ssl
@@ -48,6 +51,18 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
         # self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
         self.send_response(HTTPStatus.OK)
         # print(self.path)
+        auth_params = self.decodeAuthHeader()
+        """
+            Handle digest auth request if the request path contains the text `digestme`
+            According to the Digest Auth protocol , In the initial request to the secured page, Server will respond with the WWW-Authenticate header
+            and in the consequent call,client auth will be handle with previously issued digest.
+            Ref: http://qnimate.com/understanding-http-authentication-in-depth/
+        """
+        if 'digestme' in self.path.lower() and auth_params is None:
+            print("Potential Digest auth request received!")
+            digest_header = self.getDigestAuth()
+            print("Adding header WWW-Authenticate : {}".format(digest_header))
+            self.send_header("WWW-Authenticate", digest_header)
         self.send_header("Content-type", "application/json")
         requested_origin = self.headers.get("Origin")
         self.send_header("Access-Control-Allow-Origin", requested_origin)
@@ -69,7 +84,8 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
             'path': self.path,
             'HTTP Method': self.command,
             'request_headers': request_headers,
-            'body': request_body
+            'body': request_body,
+            'auth': auth_params
         }
         jresponse = json.dumps(response)
         # print(response)
@@ -100,6 +116,8 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
         content_type = self.headers.get("content-type", -1)
         method = self.command
         if content_length == -1 and method in ["POST", "PUT", "PATCH"] and content_type != -1:
+            # Just giving a try here, The `content-length` header could be missing in case of HTTP1.1 chunked transfer encoding state
+            # So giving it a try, If there is no data while satisfying the above condition , the rfile.readline() will hang!!!
             request_body = ""
             while True:
                 line = self.rfile.readline().decode("UTF-8").strip()
@@ -109,8 +127,27 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
             return request_body
         return None if content_length == 0 else self.rfile.read(content_length).decode("UTF-8")
 
+    def getDigestAuth(self):
+        www_authenticate_header = python_digest.build_digest_challenge(
+            time.time(), self.digestAuthSecret, 'API', 'opaque_ASVASASFAS2131', False)
+        return www_authenticate_header
+
+    def decodeAuthHeader(self):
+        auth_header = self.headers.get("Authorization", -1)
+        if auth_header == -1:
+            return None
+        auth_props = auth_header.split(' ')
+        auth_type = auth_props[0]
+        if auth_type.lower() == 'basic':
+            auth_params = base64.b64decode(
+                auth_header.split(' ')[-1]).decode('UTF-8').split(':')
+            return {'username': auth_params[0], 'password': auth_params[1]}
+        else:
+            return auth_header
+
     port = 8000
     secured = False
+    digestAuthSecret = 'this()is+my#s3cR3a1i4'
 
 
 def main():
