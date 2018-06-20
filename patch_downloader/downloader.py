@@ -40,7 +40,6 @@ def connection():
         "{}:{}".format(configs["username"], configs["password"]).encode()).decode()
     return session
 
-
 def main():
     if "username" not in configs:
         configs["username"] = input("Enter WSO2 OT username: ")
