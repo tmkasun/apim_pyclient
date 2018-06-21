@@ -4,6 +4,7 @@ import base64
 from subprocess import call
 import time
 import getpass
+from pathlib import Path
 
 name_matrix = {
     "4.2.0": "turing",
@@ -32,17 +33,27 @@ def download(patch_number, session):
     file_name = "{patch_name}.zip".format(patch_name=patch_name)
     request_url = base_url.format(kernel_name=kernel_name, patch_number=patch_number, kernel_version=configs["kernel"],
                                   file_name=file_name)
-    print("Downloading {}".format(request_url))
-    response = session.get(request_url)
-    if response.ok:
-        with open('./downloads/{file_name}'.format(file_name=file_name), 'wb') as f:
-            f.write(response.content)
+    current_file_path = './downloads/{file_name}'.format(file_name=file_name)
+    current_file = Path(current_file_path)
+    if not current_file.is_file():
+        print("zip file not exists!")
+        downloader(session, request_url, current_file_path)
+    if current_file.is_file():
         print("Unziping {}".format(file_name))
         call(["unzip", "./downloads/{}".format(file_name), "-d", "./downloads/"])
         call(["cp", "-R", "./downloads/{}/patch{}".format(patch_name,
                                                           patch_number), "./downloads/patches/"])
+
+
+def downloader(session, request_url, current_file_path):
+    print("Downloading {}".format(request_url))
+    response = session.get(request_url)
+    if response.ok:
+        with open(current_file_path, 'wb') as f:
+            f.write(response.content)
     else:
-        print("*** ERROR Downloading {} \n Reason: {} <{}>".format(file_name, response.reason, response.status_code))
+        print("*** ERROR Downloading {} \n Reason: {} <{}>".format(current_file_path,
+                                                                   response.reason, response.status_code))
 
 
 def connection():
