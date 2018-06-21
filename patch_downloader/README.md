@@ -7,3 +7,6 @@
    - patchxxxx
  - file formats
 
+# How to use
+
+![downloader](https://user-images.githubusercontent.com/3313885/41699663-80e465e8-7542-11e8-918b-6ee7f483c371.gif)
