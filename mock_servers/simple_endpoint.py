@@ -46,10 +46,25 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
             request_headers[header[0]] = header[1]
         self.wfile.write("")
 
-    def common_handler(self):
+    """
+      - 1xx: Informational - Request received, continuing process
+      - 2xx: Success - The action was successfully received,
+        understood, and accepted
+      - 3xx: Redirection - Further action must be taken in order to
+        complete the request
+      - 4xx: Client Error - The request contains bad syntax or cannot
+        be fulfilled
+      - 5xx: Server Error - The server failed to fulfill an apparently
+        valid request
+    """
+
+    def setStatusCode(self):
         # self.send_response(HTTPStatus.FORBIDDEN)
-        # self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
-        self.send_response(HTTPStatus.OK)
+        self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR, "Wolaaa")
+        # self.send_response(HTTPStatus.OK)
+
+    def common_handler(self):
+        self.setStatusCode()
         # print(self.path)
         auth_params = self.decodeAuthHeader()
         """
@@ -112,10 +127,11 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
     """
 
     def getBody(self):
+        blocking = False
         content_length = int(self.headers.get("content-length", -1))
         content_type = self.headers.get("content-type", -1)
         method = self.command
-        if content_length == -1 and method in ["POST", "PUT", "PATCH"] and content_type != -1:
+        if blocking and content_length == -1 and method in ["POST", "PUT", "PATCH"] and content_type != -1:
             # Just giving a try here, The `content-length` header could be missing in case of HTTP1.1 chunked transfer encoding state
             # So giving it a try, If there is no data while satisfying the above condition , the rfile.readline() will hang!!!
             request_body = ""
@@ -125,7 +141,7 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
                     break
                 request_body += line
             return request_body
-        return None if content_length == 0 else self.rfile.read(content_length).decode("UTF-8")
+        return None if content_length in [0, -1] else self.rfile.read(content_length).decode("UTF-8")
 
     def getDigestAuth(self):
         www_authenticate_header = python_digest.build_digest_challenge(
