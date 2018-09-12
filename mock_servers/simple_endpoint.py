@@ -1,10 +1,15 @@
+#!/usr/bin/env python3
 import json
 import base64
 import time
-import python_digest
+try:
+    import python_digest
+except ImportError:
+    print("WARN: Can't find python_digest module , Hence you won't able to use Digest Auth feature")
 from http import server, HTTPStatus
 import socketserver
 import ssl
+from os import path
 
 
 class EndpointHandler(server.BaseHTTPRequestHandler):
@@ -27,16 +32,19 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
         self.common_handler()
 
     def do_OPTIONS(self):
+        self.send_response(HTTPStatus.OK)
         requested_headers = self.headers.get("Access-Control-Request-Headers")
         requested_methods = self.headers.get("Access-Control-Request-Method")
         requested_origin = self.headers.get("Origin")
+        print("*** CORS Info: requested_origin = {}\n requested_methods = {}\n requested_headers = {}".format(
+            requested_origin, requested_methods, requested_headers))
         self.send_header("Access-Control-Allow-Origin", requested_origin)
-        self.send_response(HTTPStatus.OK)
         # Pseudo code
         # If requested_origin in allowed origin(s) or in configuration:
         #   Add domain to Access-Control-Allow-Origin response header
         self.send_header("Access-Control-Allow-Headers", requested_headers)
         self.send_header("Access-Control-Allow-Methods", requested_methods)
+        self.send_header("Access-Control-Max-Age", 86400)
         # Pseudo code
         # If requested_headers in safelisted-request-headers #https://fetch.spec.whatwg.org/#cors-safelisted-request-header
         # Append header to Access-Control-Allow-Headers header value
@@ -44,7 +52,8 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
         request_headers = {}
         for header in self.headers._headers:
             request_headers[header[0]] = header[1]
-        self.wfile.write("")
+        print(request_headers)
+        self.wfile.write(b"")
 
     """
       - 1xx: Informational - Request received, continuing process
@@ -60,7 +69,7 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
 
     def setStatusCode(self):
         # self.send_response(HTTPStatus.FORBIDDEN)
-        self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR, "Wolaaa")
+        self.send_response(HTTPStatus.OK)
         # self.send_response(HTTPStatus.OK)
 
     def common_handler(self):
@@ -113,9 +122,11 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
                                                                                             port))
         socketserver.TCPServer.allow_reuse_address = True
         httpd = socketserver.TCPServer(('', port), EndpointHandler)
+        cert_path = path.dirname(__file__)+'yourpemfile.pem'
+        print("DEBUG: cert_path = " + cert_path)
         if EndpointHandler.secured:
             httpd.socket = ssl.wrap_socket(
-                httpd.socket, server_side=True, certfile='yourpemfile.pem')
+                httpd.socket, server_side=True, certfile=cert_path)
         httpd.serve_forever()
 
     """

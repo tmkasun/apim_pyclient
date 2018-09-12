@@ -1,9 +1,10 @@
 #! /usr/bin/env python3.5
-import random, string
+import random
+import string
 from api import API
 from endpoint import Endpoint
 from restClient import RestClient
-from simple_endpoint import EndpointHandler
+from mock_servers.simple_endpoint import EndpointHandler
 from application import Application
 
 
@@ -11,7 +12,8 @@ class APITest(object):
     def __init__(self, debug=True):
         self.debub = debug
         self.client = RestClient()
-        self.store_client = RestClient("store")  # TODO: Move this to map to make it extensible
+        # TODO: Move this to map to make it extensible
+        self.store_client = RestClient("store")
 
     def populateAPIs(self, count=10):
         """
@@ -30,13 +32,42 @@ class APITest(object):
             "context": None,
             "version": "1.0.0",
             "service_url": "http://sample.knnect.com/api/endpoint",
+            "description": "",
+            "wsdlUri": "http://www.webservicex.com/globalweather.asmx?wsdl",
+            "isDefaultVersion": True,
+            "responseCaching": "Disabled",
+            "cacheTimeout": 300,
+            "destinationStatsEnabled": "Disabled",
+            "businessInformation": {
+                "businessOwner": "Kasun Thennakoon",
+                "businessOwnerEmail": "kasunte@wso2.com",
+                "technicalOwner": "Knnect",
+                "technicalOwnerEmail": "admin@wso2.com"
+            },
+            "tags": [
+                "test_tag1",
+                "fintech"
+            ],
+            "transport": [
+                "http",
+                "https"
+            ],
+            "visibility": "PUBLIC",
+            "securityScheme": [
+                "string"
+            ],
+            "scopes": [
+                "string"
+            ],
         }
-        policies = ["Silver", "Bronze", "Unlimited"]
+        policies = ["Gold", "Silver", "Bronze"]
         apis = []
         for index in range(count):
-            random_char = random.choice(string.ascii_lowercase) + random.choice(string.ascii_lowercase)
+            random_char = random.choice(
+                string.ascii_lowercase) + random.choice(string.ascii_lowercase)
             name_context = "{}_sample_{}".format(random_char, index)
             template['name'] = name_context
+            template['description'] = "A Sample API for testing APIM 3.0 " + name_context
             template['context'] = "/" + name_context
             api = API(**template)
             api.set_rest_client(self.client)
@@ -72,7 +103,8 @@ class APITest(object):
         endpoint_types = ['basic', 'digest']
         endpoints = []
         for index in range(count):
-            random_char = random.choice(string.ascii_lowercase) + random.choice(string.ascii_lowercase)
+            random_char = random.choice(
+                string.ascii_lowercase) + random.choice(string.ascii_lowercase)
             name = "{}_sample_endpoint_{}".format(random_char, index)
             service_url = "https://sample.knnect.com/api/endpoint/" + name
             max_tps = random.randint(1, 1000)
@@ -103,7 +135,8 @@ class APITest(object):
         }
         apps = []
         for index in range(count):
-            random_char = random.choice(string.ascii_lowercase) + random.choice(string.ascii_lowercase)
+            random_char = random.choice(
+                string.ascii_lowercase) + random.choice(string.ascii_lowercase)
             random_name = "{}_sample_app_{}".format(random_char, index)
             template['name'] = random_name
             template['description'] = "Sample description for " + random_name
@@ -118,23 +151,23 @@ def main():
     tester = APITest()
 
     print("INFO: Deleting existing APIs ...")
-    tester.delete_all()
+    # tester.delete_all()
     print("INFO: Deleting existing Endpoints ...")
     tester.delete_all_endpoints()
     print("INFO: Creating new APIs ...")
-    apis = tester.populateAPIs(20)
+    apis = tester.populateAPIs(2)
     api = API.get(apis[0].id)
     print("INFO: Creating new Global endpoints ...")
-    endpoints = tester.populate_global_endpoints(10)
+    endpoints = tester.populate_global_endpoints(2)
     endpoint = Endpoint.get(endpoints[0].id)
     print("INFO: Publishing newly created APIs ...")
     tester.publishAPIs(apis)
 
     print("INFO: Creating new Store Application ...")
     tester.delete_all_applications()
-    applications = tester.create_application(15)
+    applications = tester.create_application(2)
 
-    EndpointHandler.run()
+    # EndpointHandler.run()
 
 
 if __name__ == '__main__':

@@ -1,6 +1,6 @@
 default = {
     "connection": {
-        "hostname": "apim.dev.knnect.com",
-        "port": "443"
+        "hostname": "localhost",
+        "port": "9443"
     }
 }

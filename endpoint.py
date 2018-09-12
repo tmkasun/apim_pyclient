@@ -23,7 +23,16 @@ class Endpoint(Resource):
         if type not in ['http', 'https']:
             raise Exception("endpoint_type should be either http or https")
 
-        self.endpointConfig = {'service_url': service_url}
+        self.endpointConfig = {
+            "endpointType": "SINGLE",
+            "list": [
+                {
+                    "url": service_url,
+                    "timeout": "1000",
+                    "attributes": []
+                }
+            ]
+        }
         self.endpointSecurity = {'enabled': False}
         self.name = name
         self.max_tps = maxTps
@@ -52,7 +61,7 @@ class Endpoint(Resource):
     @property
     def _parsers(self):
         parsers = {
-            'endpointConfig': self._parse_endpointConfig
+            # 'endpointConfig': self._parse_endpointConfig
         }
         return parsers
 
@@ -62,11 +71,11 @@ class Endpoint(Resource):
 
     @property
     def service_url(self):
-        return self.endpointConfig['service_url']
+        return self.endpointConfig['list'][0]['url']
 
     @service_url.setter
     def service_url(self, value):
-        self.endpointConfig['service_url'] = value
+        self.endpointConfig['list'][0]['url'] = value
 
     def save(self):
         headers = {
@@ -85,15 +94,17 @@ class Endpoint(Resource):
         return self
 
     def delete(self):
-        res = self.client.session.delete(Endpoint.get_endpoint() + "/{}".format(self.id), verify=self.client.verify)
+        res = self.client.session.delete(Endpoint.get_endpoint(
+        ) + "/{}".format(self.id), verify=self.client.verify)
         if res.status_code != 200:
-            print("Warning Error while deleting the API {}\nERROR: {}".format(self.name, res.content))
+            print("Warning Error while deleting the API {}\nERROR: {}".format(
+                self.name, res.content))
         print("Status code: {}".format(res.status_code))
 
     def to_json(self):
         temp = {
             'name': self.name,
-            'endpointConfig': json.dumps(self.endpointConfig),
+            'endpointConfig': self.endpointConfig,
             'endpointSecurity': self.endpointSecurity,
             'maxTps': self.max_tps,
             'type': self.type
@@ -109,9 +120,11 @@ class Endpoint(Resource):
         print("Status code: {}".format(res.status_code))
         apis_list = res.json()['list']
         for api in apis_list:
-            res = client.session.delete(Endpoint.get_endpoint() + "/{}".format(api['id']), verify=client.verify)
+            res = client.session.delete(Endpoint.get_endpoint(
+            ) + "/{}".format(api['id']), verify=client.verify)
             if res.status_code != 200:
-                print("Warning Error while deleting the API {}\nERROR: {}".format(api['name'], res.content))
+                print("Warning Error while deleting the API {}\nERROR: {}".format(
+                    api['name'], res.content))
             print("Status code: {}".format(res.status_code))
 
     @staticmethod
