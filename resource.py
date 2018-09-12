@@ -25,8 +25,9 @@ class Resource(object):
         self._data = DotDict(json_response)
         if not self._data.id:  # TODO: Should be able to pass non-preserved api JSON object as well ?
             print("WARN: Missing API ID for parsing data")
-            raise Exception(
-                "JSON response should have id property for a valid Resource")
+            self._data.id = None
+            # raise Exception(
+            #     "JSON response should have id property for a valid Resource")
         for key, val in self._data.items():
             if key in self._parsers:
                 self._parsers[key](val)

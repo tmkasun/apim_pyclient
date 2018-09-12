@@ -38,6 +38,7 @@ class RestClient(object):
         token_part_2 = [v for k, v in self.session.cookies.iteritems(
         ) if k.startswith("WSO2_AM_TOKEN_2")].pop()
         self.access_token = token_part_1 + token_part_2
+        print("DEBUG: Access token = {}".format(self.access_token))
         self.session.headers['Authorization'] = 'Bearer ' + token_part_1
         print("session headers: {}".format(self.session.headers))
 

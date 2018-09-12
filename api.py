@@ -2,6 +2,7 @@ from utils.utils import DotDict
 from endpoint import Endpoint
 from restClient import RestClient
 from resource import Resource
+import json
 
 
 class API(Resource):
@@ -18,10 +19,14 @@ class API(Resource):
         self.version = version
         self.endpoint = DotDict()
         if service_url:
-            inline_endpoint_name = "{}_{}".format(Endpoint.CONST.TYPES.SANDBOX, name)
-            self.endpoint[Endpoint.CONST.TYPES.SANDBOX] = Endpoint(inline_endpoint_name, 'http', service_url)
-            inline_endpoint_name = "{}_{}".format(Endpoint.CONST.TYPES.PRODUCTION, name)
-            self.endpoint[Endpoint.CONST.TYPES.PRODUCTION] = Endpoint(inline_endpoint_name, 'http', service_url)
+            inline_endpoint_name = "{}_{}".format(
+                Endpoint.CONST.TYPES.SANDBOX, name)
+            self.endpoint[Endpoint.CONST.TYPES.SANDBOX] = Endpoint(
+                inline_endpoint_name, 'http', service_url)
+            inline_endpoint_name = "{}_{}".format(
+                Endpoint.CONST.TYPES.PRODUCTION, name)
+            self.endpoint[Endpoint.CONST.TYPES.PRODUCTION] = Endpoint(
+                inline_endpoint_name, 'http', service_url)
         if kwargs:
             self._parse_json(kwargs)
 
@@ -35,8 +40,10 @@ class API(Resource):
         res = self.client.session.post(API.get_endpoint(), json=self.to_json(),
                                        verify=self.client.verify)
         if res.status_code != 201:
-            print(res.json())
-            raise Exception("An error occurred while creating an API CODE: " + res.status_code)
+            print(res.content)
+            print(res.status_code)
+            raise Exception(
+                "An error occurred while creating an API CODE: " + str(res.status_code))
         self._parse_json(res.json())
         print("Status code: {}".format(res.status_code))
         return self
@@ -47,9 +54,13 @@ class API(Resource):
             'version': self.version,
             'context': self.context,
         }
+        keys = self._data.keys()
+        for key, value in self.__dict__.items():
+            if key in keys:
+                temp[key] = value
         endpoints = []
-        for type, endpoint in self.endpoint.items():
-            serialize_endpoint = {"type": type}
+        for epType, endpoint in self.endpoint.items():
+            serialize_endpoint = {"type": epType}
             if endpoint.id:
                 serialize_endpoint['key'] = endpoint.id
             else:
@@ -66,14 +77,17 @@ class API(Resource):
 
     def set_endpoint(self, endpoint_type, endpoint):
         if endpoint_type not in Endpoint.CONST.TYPES.values():
-            raise Exception("Endpoint type should be one of these {}".format(Endpoint.CONST.TYPES.values()))
+            raise Exception("Endpoint type should be one of these {}".format(
+                Endpoint.CONST.TYPES.values()))
         if type(endpoint) is not Endpoint:
             raise Exception("endpoint should be an instance of Endpoint")
         if endpoint_type != Endpoint.CONST.TYPES.INLINE and not endpoint.id:
-            raise Exception("Global endpoint should have persist before mapping it to an API")
+            raise Exception(
+                "Global endpoint should have persist before mapping it to an API")
         self.endpoint[endpoint_type] = endpoint
         self._data.endpoint = self.endpoint
-        res = self.client.session.put(API.get_endpoint() + "/" + self.id, json=self._data, verify=self.client.verify)
+        res = self.client.session.put(
+            API.get_endpoint() + "/" + self.id, json=self.to_json(), verify=self.client.verify)
         if res.status_code != 200:
             print("Something went wrong when updating endpoints")
             print(res)
@@ -86,16 +100,19 @@ class API(Resource):
         else:
             self.policies.append(policy_data)
         self._data["policies"] = self.policies
-        res = self.client.session.put(API.get_endpoint() + "/" + self.id, json=self._data, verify=self.client.verify)
+        res = self.client.session.put(
+            API.get_endpoint() + "/" + self.id, json=self.to_json(), verify=self.client.verify)
         if res.status_code != 200:
             print("Something went wrong when updating policies")
             print(res)
         return self
 
     def delete(self):
-        res = self.client.session.delete(API.get_endpoint() + "/{}".format(self.id), verify=self.client.verify)
+        res = self.client.session.delete(
+            API.get_endpoint() + "/{}".format(self.id), verify=self.client.verify)
         if res.status_code != 200:
-            print("Warning Error while deleting the API {}\nERROR: {}".format(self.name, res.content))
+            print("Warning Error while deleting the API {}\nERROR: {}".format(
+                self.name, res.content))
         print("Status code: {}".format(res.status_code))
 
     def change_lc(self, state):
@@ -104,7 +121,8 @@ class API(Resource):
             "action": state,
             "apiId": api_id
         }
-        lcs = self.client.session.get(API.get_endpoint() + "/{apiId}/lifecycle".format(apiId=api_id))
+        lcs = self.client.session.get(
+            API.get_endpoint() + "/{apiId}/lifecycle".format(apiId=api_id))
         if lcs.ok:
             lcs = lcs.json()
             available_transitions = [current_state for current_state in lcs['availableTransitionBeanList'] if
@@ -114,7 +132,8 @@ class API(Resource):
                                                verify=self.client.verify)
                 print("Status code: {}".format(res.status_code))
             else:
-                raise ("Invalid transition state valid ones are = {}".format(lcs['availableTransitionBeanList']))
+                raise ("Invalid transition state valid ones are = {}".format(
+                    lcs['availableTransitionBeanList']))
         else:
             raise ("Can't find Lifecycle for the api {}".format(api_id))
 
@@ -134,9 +153,11 @@ class API(Resource):
         print("Status code: {}".format(res.status_code))
         apis_list = res.json()['list']
         for api in apis_list:
-            res = client.session.delete(API.get_endpoint() + "/{}".format(api['id']), verify=client.verify)
+            res = client.session.delete(
+                API.get_endpoint() + "/{}".format(api['id']), verify=client.verify)
             if res.status_code != 200:
-                print("Warning Error while deleting the API {}\nERROR: {}".format(api['name'], res.content))
+                print("Warning Error while deleting the API {}\nERROR: {}".format(
+                    api['name'], res.content))
             print("Status code: {}".format(res.status_code))
 
     @staticmethod
