@@ -11,6 +11,9 @@ import socketserver
 import ssl
 from os import path
 
+import jwt
+from pprint import pprint
+
 
 class EndpointHandler(server.BaseHTTPRequestHandler):
     def do_GET(self):
@@ -94,6 +97,8 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
         self.send_header("Set-Cookie",
                          'tmkasun_sample="KasunThennakoon"; Path=/apis; HttpOnly; Domain=localhost')
         self.end_headers()
+        jwt = self.decodeJWT()
+        pprint(jwt)
         request_headers = {}
         request_body = self.getBody()
         for header in self.headers._headers:
@@ -122,7 +127,7 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
                                                                                             port))
         socketserver.TCPServer.allow_reuse_address = True
         httpd = socketserver.TCPServer(('', port), EndpointHandler)
-        cert_path = path.dirname(__file__)+'yourpemfile.pem'
+        cert_path = path.dirname(__file__) + 'yourpemfile.pem'
         print("DEBUG: cert_path = " + cert_path)
         if EndpointHandler.secured:
             httpd.socket = ssl.wrap_socket(
@@ -171,6 +176,12 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
             return {'username': auth_params[0], 'password': auth_params[1]}
         else:
             return auth_header
+
+    def decodeJWT(self, headerName="X-JWT-Assertion"):
+        jwt_header = self.headers.get(headerName)
+        pub_key_path = path.dirname(__file__) + '/jwt_validation.pub.key'
+        with open(pub_key_path, 'r') as public_key:
+            return jwt.decode(jwt_header, public_key.read(), algorithms='RS512')
 
     port = 8000
     secured = False
