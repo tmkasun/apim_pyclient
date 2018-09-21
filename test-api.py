@@ -6,6 +6,7 @@ from endpoint import Endpoint
 from restClient import RestClient
 from mock_servers.simple_endpoint import EndpointHandler
 from application import Application
+from User import User
 
 
 class APITest(object):
@@ -76,6 +77,16 @@ class APITest(object):
             apis.append(api)
         return apis
 
+    def populate_users(self, count=10):
+        for index in range(count):
+            random_char = random.choice(
+                string.ascii_lowercase) + random.choice(string.ascii_lowercase)
+            userName = "{}_user_{}".format(random_char, index)
+            user = User(userName)
+            print("DEBUG: {name} user created with password {name}123".format(
+                name=user.userName))
+            user.save()
+
     def publishAPIs(self, apis, state="Published"):
         """
 
@@ -92,6 +103,10 @@ class APITest(object):
 
     def delete_all(self):
         API.delete_all(self.client)
+
+
+    def delete_all_users(self):
+        User.delete_all()
 
     def delete_all_endpoints(self):
         Endpoint.delete_all(self.client)
@@ -167,6 +182,9 @@ def main():
     tester.delete_all_applications()
     applications = tester.create_application(2)
 
+    print("INFO: Populating users ...")
+    tester.delete_all_users()
+    tester.populate_users(10)
     # EndpointHandler.run()
 
 
