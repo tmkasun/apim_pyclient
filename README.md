@@ -1,4 +1,4 @@
-# This repository contains a Python Client for playing with WSO2 API Manager REST API and a dummy HTTP(s) and WebSocket server for handling/monitoring requests 
+# This repository contains a Python Client for playing with WSO2 API Manager REST API and a dummy HTTP(s) and WebSocket server for handling/monitoring requests
 
 I wrote this simple python client to make it easy to create , delete , update lifecycle states of an API for testing purposes.
 
@@ -10,6 +10,17 @@ Start [WSO2 API Manager](http://wso2.com/api-management/) server. You can get th
 - Publisher : https://localhost:9443/api/am/publisher/v1.0/apis/swagger.json
 
 You need to change the `API version` , `hostname` and `port` accordingly.
+
+# Create test artifacts
+
+- Delete existing APIs
+- Delete existing Endpoints
+- Create new APIs
+- Create new Global endpoints
+- Publish newly created APIs
+- Create new Store Application
+- Delete all existing users (Except admin)
+- Create new users
 
 # Echo HTTP(S) server
 

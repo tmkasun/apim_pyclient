@@ -3,6 +3,7 @@ from configs import default
 from requests.auth import HTTPBasicAuth
 from utils.utils import DotDict
 
+
 class User(object):
 
     def __init__(self, userName, password=None, **kwargs):
@@ -18,6 +19,9 @@ class User(object):
 
     def serialize(self):
         data = {
+            "schemas": [
+
+            ],
             "name": {
                 "familyName": "{}".format(self.userName),
                 "givenName": "sam"

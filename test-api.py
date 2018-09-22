@@ -81,7 +81,7 @@ class APITest(object):
         for index in range(count):
             random_char = random.choice(
                 string.ascii_lowercase) + random.choice(string.ascii_lowercase)
-            userName = "{}_user_{}".format(random_char, index)
+            userName = "{}user{}".format(random_char, index)
             user = User(userName)
             print("DEBUG: {name} user created with password {name}123".format(
                 name=user.userName))
@@ -166,11 +166,11 @@ def main():
     tester = APITest()
 
     print("INFO: Deleting existing APIs ...")
-    # tester.delete_all()
+    tester.delete_all()
     print("INFO: Deleting existing Endpoints ...")
     tester.delete_all_endpoints()
     print("INFO: Creating new APIs ...")
-    apis = tester.populateAPIs(2)
+    apis = tester.populateAPIs(12)
     api = API.get(apis[0].id)
     print("INFO: Creating new Global endpoints ...")
     endpoints = tester.populate_global_endpoints(2)
@@ -180,7 +180,7 @@ def main():
 
     print("INFO: Creating new Store Application ...")
     tester.delete_all_applications()
-    applications = tester.create_application(2)
+    applications = tester.create_application(9)
 
     print("INFO: Populating users ...")
     tester.delete_all_users()
