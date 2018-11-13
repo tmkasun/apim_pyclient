@@ -10,7 +10,7 @@ from http import server, HTTPStatus
 import socketserver
 import ssl
 from os import path
-
+from urllib.parse import urlparse, parse_qs
 import jwt
 from pprint import pprint
 
@@ -76,6 +76,7 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
         # self.send_response(HTTPStatus.OK)
 
     def common_handler(self):
+        self.delayResponse()
         self.setStatusCode()
         # print(self.path)
         auth_params = self.decodeAuthHeader()
@@ -177,11 +178,24 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
         else:
             return auth_header
 
+    def delayResponse(self):
+        path = urlparse(self.path)
+        queries = parse_qs(path.query)
+        delay_time = queries.get("kdelay")
+        if delay_time:
+            delay_time = delay_time[0]
+            print("DEBUG: Delaying response by = {} seconds".format(delay_time))
+            time.sleep(float(delay_time))
+
+
     def decodeJWT(self, headerName="X-JWT-Assertion"):
         jwt_header = self.headers.get(headerName)
+        if not jwt_header:
+            return False
+        print("DEBUG: JWT = {}".format(jwt_header))
         pub_key_path = path.dirname(__file__) + '/jwt_validation.pub.key'
         with open(pub_key_path, 'r') as public_key:
-            return jwt.decode(jwt_header, public_key.read(), algorithms='RS512')
+            return jwt.decode(jwt_header, public_key.read(), verify=False)
 
     port = 8000
     secured = False
