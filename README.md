@@ -38,6 +38,7 @@ python3 simple_endpoint.py
 - CORS request handler
 - Dump payload in `POST`, `PUT` or `PATCH` requests
 - Dump all the headers and return them as JSON in response body
+- Delay (mimic backend latency) response by setting the `kdelay` (seconds) query parameter in the request i:e http://localhost:8000/apis?kdelay=2.5
 
 # Websocket Echo server
 
