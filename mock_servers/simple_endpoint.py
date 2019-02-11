@@ -73,7 +73,6 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
     def setStatusCode(self):
         # self.send_response(HTTPStatus.FORBIDDEN)
         self.send_response(HTTPStatus.OK)
-        # self.send_response(HTTPStatus.OK)
 
     def common_handler(self):
         self.delayResponse()
@@ -128,7 +127,8 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
                                                                                             port))
         socketserver.TCPServer.allow_reuse_address = True
         httpd = socketserver.TCPServer(('', port), EndpointHandler)
-        cert_path = path.dirname(__file__) + 'yourpemfile.pem'
+        # cert_path = path.dirname(__file__) + 'youryourpemfile.pem'
+        cert_path = 'yourpemfile.pem'
         print("DEBUG: cert_path = " + cert_path)
         if EndpointHandler.secured:
             httpd.socket = ssl.wrap_socket(
