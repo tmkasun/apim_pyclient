@@ -13,6 +13,7 @@ from os import path
 from urllib.parse import urlparse, parse_qs
 import jwt
 from pprint import pprint
+from dicttoxml import dicttoxml
 
 
 class EndpointHandler(server.BaseHTTPRequestHandler):
@@ -90,19 +91,38 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
             digest_header = self.getDigestAuth()
             print("Adding header WWW-Authenticate : {}".format(digest_header))
             self.send_header("WWW-Authenticate", digest_header)
-        self.send_header("Content-type", "application/json")
+
+
         requested_origin = self.headers.get("Origin")
         self.send_header("Access-Control-Allow-Origin", requested_origin)
         self.send_header("Access-Control-Allow-Credentials", "true")
         self.send_header("Set-Cookie",
                          'tmkasun_sample="KasunThennakoon"; Path=/apis; HttpOnly; Domain=localhost')
-        self.end_headers()
+
         jwt = self.decodeJWT()
         pprint(jwt)
-        request_headers = {}
-        request_body = self.getBody()
+
+        self.request_headers = {}
         for header in self.headers._headers:
-            request_headers[header[0]] = header[1]
+            self.request_headers[header[0]] = header[1]
+        response = self.formatResponsePayload()
+        # print(response)
+        self.end_headers()
+        self.wfile.write(str.encode(response))
+
+    """
+    Honour the Accept header, If Accept header is not present use the default formatting which is application/json.
+    Sent the response content-type header with accept content type or the default content
+    Spec: https://tools.ietf.org/html/rfc7231#section-5.3.2
+    """
+    def formatResponsePayload(self):
+        accept_header = self.headers.get("Accept")
+        # default content type
+        self.response_content_type = "text/plain"
+        # Ignore the q-factor weighting (Quality Value) and set response header to accept header type of accept type in supported response content types
+        if accept_header is not None and accept_header.lower().split(";")[0] in ["application/json","application/xml"]:
+            self.response_content_type = accept_header
+
         response = {
             'description': "This response contains all the information came into the endpoint server including request headers and body",
             'ok': 200,
@@ -112,13 +132,19 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
             },
             'path': self.path,
             'HTTP Method': self.command,
-            'request_headers': request_headers,
-            'body': request_body,
-            'auth': auth_params
+            'request_headers': self.request_headers,
+            'body': self.getBody(),
+            'auth': self.decodeAuthHeader()
         }
-        jresponse = json.dumps(response)
-        # print(response)
-        self.wfile.write(str.encode(jresponse))
+        if "application/json" in self.response_content_type.lower():
+            formatted_response = json.dumps(response)
+        elif "application/xml" in self.response_content_type.lower():
+            formatted_response = dicttoxml(response).decode("utf-8")
+        else:
+            formatted_response = str(response)
+
+        self.send_header("Content-type", self.response_content_type)
+        return formatted_response
 
     @staticmethod
     def run():
@@ -144,7 +170,7 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
     """
 
     def getBody(self):
-        blocking = False
+        blocking = True
         content_length = int(self.headers.get("content-length", -1))
         content_type = self.headers.get("content-type", -1)
         method = self.command
