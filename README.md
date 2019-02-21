@@ -39,6 +39,7 @@ python3 simple_endpoint.py
 - Dump payload in `POST`, `PUT` or `PATCH` requests
 - Dump all the headers and return them as JSON in response body
 - Delay (mimic backend latency) response by setting the `kdelay` (seconds) query parameter in the request i:e http://localhost:8000/apis?kdelay=2.5
+- Response with supported content types (`application/xml` or `application/json`). Honor the `accept` header if present
 
 # Websocket Echo server
 
