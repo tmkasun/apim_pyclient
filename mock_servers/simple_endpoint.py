@@ -76,6 +76,7 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
         self.send_response(HTTPStatus.OK)
 
     def common_handler(self):
+        self.body = False
         self.delayResponse()
         self.setStatusCode()
         # print(self.path)
@@ -91,7 +92,6 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
             digest_header = self.getDigestAuth()
             print("Adding header WWW-Authenticate : {}".format(digest_header))
             self.send_header("WWW-Authenticate", digest_header)
-
 
         requested_origin = self.headers.get("Origin")
         self.send_header("Access-Control-Allow-Origin", requested_origin)
@@ -115,12 +115,13 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
     Sent the response content-type header with accept content type or the default content
     Spec: https://tools.ietf.org/html/rfc7231#section-5.3.2
     """
+
     def formatResponsePayload(self):
         accept_header = self.headers.get("Accept")
         # default content type
         self.response_content_type = "text/plain"
         # Ignore the q-factor weighting (Quality Value) and set response header to accept header type of accept type in supported response content types
-        if accept_header is not None and accept_header.lower().split(";")[0] in ["application/json","application/xml"]:
+        if accept_header is not None and accept_header.lower().split(";")[0] in ["application/json", "application/xml"]:
             self.response_content_type = accept_header
 
         response = {
@@ -170,6 +171,8 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
     """
 
     def getBody(self):
+        if self.body is not False:
+            return self.body
         blocking = True
         content_length = int(self.headers.get("content-length", -1))
         content_type = self.headers.get("content-type", -1)
@@ -178,13 +181,19 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
             # Just giving a try here, The `content-length` header could be missing in case of HTTP1.1 chunked transfer encoding state
             # So giving it a try, If there is no data while satisfying the above condition , the rfile.readline() will hang!!!
             request_body = ""
+            firstLine = True
             while True:
                 line = self.rfile.readline().decode("UTF-8").strip()
+                if firstLine:
+                    firstLine = False
+                    continue
                 if(len(line) == 0):
                     break
                 request_body += line
-            return request_body
-        return None if content_length in [0, -1] else self.rfile.read(content_length).decode("UTF-8")
+            self.body = request_body[:-1]
+            return self.body
+        self.body = None if content_length in [0, -1] else self.rfile.read(content_length).decode("UTF-8")
+        return self.body
 
     def getDigestAuth(self):
         www_authenticate_header = python_digest.build_digest_challenge(
@@ -212,7 +221,6 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
             delay_time = delay_time[0]
             print("DEBUG: Delaying response by = {} seconds".format(delay_time))
             time.sleep(float(delay_time))
-
 
     def decodeJWT(self, headerName="X-JWT-Assertion"):
         jwt_header = self.headers.get(headerName)
