@@ -90,3 +90,6 @@ ENV/
 #tmkasun additions
 .idea/
 .vscode/
+*.classpath
+*.project
+*.settings/

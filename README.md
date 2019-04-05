@@ -40,6 +40,9 @@ python3 simple_endpoint.py
 - Dump all the headers and return them as JSON in response body
 - Delay (mimic backend latency) response by setting the `kdelay` (seconds) query parameter in the request i:e http://localhost:8000/apis?kdelay=2.5
 - Response with supported content types (`application/xml` or `application/json`). Honor the `accept` header if present
+- Return sample file when requested with available sample files extensions in `mock_servers/resources/` directory
+  - Example: localhost:8000/apis/send/me/a.pdf will return python.pdf file in `mock_servers/resources/` with content-type header as `application/pdf`
+  - If want to add support to new extension, put the file to `mock_servers/resources/` i:e `my_sample.extension` and make a request like localhost:8000/apis/send/my/sample.extension , It will return the `my_sample.extension` file with `application/{extension}` in the `content-type` header
 
 # Websocket Echo server
 
