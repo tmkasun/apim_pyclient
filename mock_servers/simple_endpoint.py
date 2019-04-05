@@ -14,6 +14,7 @@ from urllib.parse import urlparse, parse_qs
 import jwt
 from pprint import pprint
 from dicttoxml import dicttoxml
+from glob import glob # this is for serving any .pdf , .jpeg , .png etc media files
 
 
 class EndpointHandler(server.BaseHTTPRequestHandler):
@@ -108,7 +109,7 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
         response = self.formatResponsePayload()
         # print(response)
         self.end_headers()
-        self.wfile.write(str.encode(response))
+        self.wfile.write(response)
 
     """
     Honour the Accept header, If Accept header is not present use the default formatting which is application/json.
@@ -143,8 +144,17 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
             formatted_response = dicttoxml(response).decode("utf-8")
         else:
             formatted_response = str(response)
-
-        self.send_header("Content-type", self.response_content_type)
+        formatted_response = str.encode(formatted_response)
+        if self.path.split('/')[-1].find('.') is not -1:
+            file_name = self.path.split('/')[-1]
+            extention = file_name.split('.')[-1]
+            files = glob('./resources/*.{}'.format(extention))
+            if not len(files) == 0:
+                self.send_header("Content-type", "application/{}".format(extention))
+                with open(files[0], 'rb') as file_response:
+                    formatted_response = file_response.read()
+        else:
+            self.send_header("Content-type", self.response_content_type)
         return formatted_response
 
     @staticmethod
