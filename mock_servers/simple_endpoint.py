@@ -147,6 +147,8 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
         formatted_response = str.encode(formatted_response)
         if self.path.split('/')[-1].find('.') is not -1:
             file_name = self.path.split('/')[-1]
+            if file_name.find('?') is not -1:
+                file_name = file_name.split('?')[0]
             extention = file_name.split('.')[-1]
             files = glob('./resources/*.{}'.format(extention))
             if not len(files) == 0:
