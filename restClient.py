@@ -42,6 +42,8 @@ class RestClient(object):
         self.session.headers['Authorization'] = 'Bearer ' + token_part_1
         print("session headers: {}".format(self.session.headers))
 
+    def create_application(self):
+        pass
     @staticmethod
     def get_scopes_for_app(application):
         return RestClient.APP_SCOPES[application]
