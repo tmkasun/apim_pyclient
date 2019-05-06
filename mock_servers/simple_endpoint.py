@@ -74,6 +74,7 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
 
     def setStatusCode(self):
         # self.send_response(HTTPStatus.FORBIDDEN)
+        # self.send_response(HTTPStatus.BAD_REQUEST)
         self.send_response(HTTPStatus.OK)
 
     def common_handler(self):
