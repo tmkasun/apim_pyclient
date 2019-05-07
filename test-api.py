@@ -30,38 +30,67 @@ class APITest(object):
         """
         template = {
             "name": None,
+            "description": "",
             "context": None,
             "version": "1.0.0",
-            "service_url": "http://sample.knnect.com/api/endpoint",
-            "description": "",
-            "wsdlUri": "http://www.webservicex.com/globalweather.asmx?wsdl",
-            "isDefaultVersion": True,
+            "provider": "admin",
+            "apiDefinition": "{\"paths\":{\"/order\":{\"post\":{\"x-auth-type\":\"Application & Application User\",\"x-throttling-tier\":\"Unlimited\",\"description\":\"Create a new Order\",\"parameters\":[{\"schema\":{\"$ref\":\"#/definitions/Order\"},\"description\":\"Order object that needs to be added\",\"name\":\"body\",\"required\":true,\"in\":\"body\"}],\"responses\":{\"201\":{\"headers\":{\"Location\":{\"description\":\"The URL of the newly created resource.\",\"type\":\"string\"}},\"schema\":{\"$ref\":\"#/definitions/Order\"},\"description\":\"Created.\"}}}},\"/menu\":{\"get\":{\"x-auth-type\":\"Application & Application User\",\"x-throttling-tier\":\"Unlimited\",\"description\":\"Return a list of available menu items\",\"parameters\":[],\"responses\":{\"200\":{\"headers\":{},\"schema\":{\"title\":\"Menu\",\"properties\":{\"list\":{\"items\":{\"$ref\":\"#/definitions/MenuItem\"},\"type\":\"array\"}},\"type\":\"object\"},\"description\":\"OK.\"}}}}},\"schemes\":[\"https\"],\"produces\":[\"application/json\"],\"swagger\":\"2.0\",\"definitions\":{\"MenuItem\":{\"title\":\"Pizza menu Item\",\"properties\":{\"price\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"image\":{\"type\":\"string\"}},\"required\":[\"name\"]},\"Order\":{\"title\":\"Pizza Order\",\"properties\":{\"customerName\":{\"type\":\"string\"},\"delivered\":{\"type\":\"boolean\"},\"address\":{\"type\":\"string\"},\"pizzaType\":{\"type\":\"string\"},\"creditCardNumber\":{\"type\":\"string\"},\"quantity\":{\"type\":\"number\"},\"orderId\":{\"type\":\"string\"}},\"required\":[\"orderId\"]}},\"consumes\":[\"application/json\"],\"info\":{\"title\":\"PizzaShackAPI\",\"description\":\"This document describe a RESTFul API for Pizza Shack online pizza delivery store.\\n\",\"license\":{\"name\":\"Apache 2.0\",\"url\":\"http://www.apache.org/licenses/LICENSE-2.0.html\"},\"contact\":{\"email\":\"architecture@pizzashack.com\",\"name\":\"John Doe\",\"url\":\"http://www.pizzashack.com\"},\"version\":\"1.0.0\"}}",
+            "wsdlUri": None,
+            "status": "CREATED",
             "responseCaching": "Disabled",
             "cacheTimeout": 300,
-            "destinationStatsEnabled": "Disabled",
-            "businessInformation": {
-                "businessOwner": "Kasun Thennakoon",
-                "businessOwnerEmail": "kasunte@wso2.com",
-                "technicalOwner": "Knnect",
-                "technicalOwnerEmail": "admin@wso2.com"
-            },
-            "tags": [
-                "test_tag1",
-                "fintech"
-            ],
-            "transport": [
+            "destinationStatsEnabled": False,
+            "isDefaultVersion": False,
+            "type": "HTTP",
+            "transport":    [
                 "http",
                 "https"
             ],
+            "tags": ["pizza"],
+            "tiers": ["Unlimited"],
+            "maxTps":    {
+                "sandbox": 5000,
+                "production": 1000
+            },
             "visibility": "PUBLIC",
-            "securityScheme": [
-                "string"
-            ],
-            "scopes": [
-                "string"
-            ],
+            "visibleRoles": [],
+            "endpointConfig": "{\"production_endpoints\":{\"url\":\"https://localhost:9443/am/sample/pizzashack/v1/api/\",\"config\":null},\"sandbox_endpoints\":{\"url\":\"https://localhost:9443/am/sample/pizzashack/v1/api/\",\"config\":null},\"endpoint_type\":\"http\"}",
+            "endpointSecurity":    {
+                "username": "user",
+                "type": "basic",
+                "password": "pass"
+            },
+            "gatewayEnvironments": "Production and Sandbox",
+            "sequences": [{"name": "json_validator", "type": "in"}, {"name": "log_out_message", "type": "out"}],
+            "subscriptionAvailability": None,
+            "subscriptionAvailableTenants": [],
+            "businessInformation":    {
+                "businessOwnerEmail": "marketing@pizzashack.com",
+                "technicalOwnerEmail": "architecture@pizzashack.com",
+                "technicalOwner": "John Doe",
+                "businessOwner": "Jane Roe"
+            },
+            "corsConfiguration":    {
+                "accessControlAllowOrigins": ["*"],
+                "accessControlAllowHeaders":       [
+                    "authorization",
+                    "Access-Control-Allow-Origin",
+                    "Content-Type",
+                    "SOAPAction"
+                ],
+                "accessControlAllowMethods":       [
+                    "GET",
+                    "PUT",
+                    "POST",
+                    "DELETE",
+                    "PATCH",
+                    "OPTIONS"
+                ],
+                "accessControlAllowCredentials": False,
+                "corsConfigurationEnabled": False
+            }
         }
-        policies = ["Gold", "Silver", "Bronze"]
+        # policies = ["Gold", "Silver", "Bronze"]
         apis = []
         for index in range(count):
             random_char = random.choice(
@@ -73,7 +102,7 @@ class APITest(object):
             api = API(**template)
             api.set_rest_client(self.client)
             api.save()
-            api.set_policies(policies)
+            # api.set_policies(policies)
             apis.append(api)
         return apis
 
@@ -103,7 +132,6 @@ class APITest(object):
 
     def delete_all(self):
         API.delete_all(self.client)
-
 
     def delete_all_users(self):
         User.delete_all()
@@ -167,24 +195,24 @@ def main():
 
     print("INFO: Deleting existing APIs ...")
     tester.delete_all()
-    print("INFO: Deleting existing Endpoints ...")
-    tester.delete_all_endpoints()
+    # print("INFO: Deleting existing Endpoints ...")
+    # tester.delete_all_endpoints()
     print("INFO: Creating new APIs ...")
     apis = tester.populateAPIs(12)
     api = API.get(apis[0].id)
-    print("INFO: Creating new Global endpoints ...")
-    endpoints = tester.populate_global_endpoints(2)
-    endpoint = Endpoint.get(endpoints[0].id)
-    print("INFO: Publishing newly created APIs ...")
-    tester.publishAPIs(apis)
+    # print("INFO: Creating new Global endpoints ...")
+    # endpoints = tester.populate_global_endpoints(2)
+    # endpoint = Endpoint.get(endpoints[0].id)
+    # print("INFO: Publishing newly created APIs ...")
+    # tester.publishAPIs(apis)
 
-    print("INFO: Creating new Store Application ...")
-    tester.delete_all_applications()
-    applications = tester.create_application(9)
+    # print("INFO: Creating new Store Application ...")
+    # tester.delete_all_applications()
+    # applications = tester.create_application(9)
 
-    print("INFO: Populating users ...")
-    tester.delete_all_users()
-    tester.populate_users(10)
+    # print("INFO: Populating users ...")
+    # tester.delete_all_users()
+    # tester.populate_users(10)
     # EndpointHandler.run()
 
 

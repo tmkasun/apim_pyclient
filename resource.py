@@ -9,7 +9,7 @@ class Resource(object):
     """
     BASE = "https://{host}:{port}/api/am/".format(
         host=default['connection']['hostname'], port=default['connection']['port'])
-    VERSION = 1.0
+    VERSION = 0.14
     APPLICATION = "publisher"
     RESOURCE = ''
 

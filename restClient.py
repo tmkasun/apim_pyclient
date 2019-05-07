@@ -1,5 +1,6 @@
 import requests
 from configs import default
+from requests.auth import HTTPBasicAuth
 
 
 class RestClient(object):
@@ -9,12 +10,13 @@ class RestClient(object):
         "store": 'apim:subscribe apim:signup apim:workflow_approve'
     }
 
-    def __init__(self, application="publisher"):
+    def __init__(self, application_name="publisher"):
+        self.application_name = application_name
         self.base_path = "https://{host}:{port}".format(
             host=default['connection']['hostname'], port=default['connection']['port'])
         self.session = requests.Session()
         self.verify = False
-        self.application = application
+        self.create_application()
         self._get_access_token()
         RestClient._client = self
 
@@ -23,30 +25,47 @@ class RestClient(object):
             'username': 'admin',
             'password': 'admin',
             'grant_type': 'password',
-            'validity_period': '3600',
-            'scopes': RestClient.get_scopes_for_app(self.application)
+            'scope': self.get_scopes_for_app()
         }
-        login_endpoint = self.base_path + \
-            "/login/token/{application}".format(application=self.application)
-        login = self.session.post(
-            login_endpoint, data=form_data, verify=self.verify)
-        if not login.ok:
-            print("Error: {}".format(login.reason))
+        token_endpoint = self.base_path + "/oauth2/token"
+        token_response = requests.post(
+            token_endpoint, data=form_data, verify=self.verify, auth=(self.application['clientId'], self.application['clientSecret']))
+        if not token_response.ok:
+            print("Error: {}".format(token_response.reason))
             return False
         # This is to ignore the environment prefix and get the token value
-        token_part_1 = login.json()['partialToken']
-        token_part_2 = [v for k, v in self.session.cookies.iteritems(
-        ) if k.startswith("WSO2_AM_TOKEN_2")].pop()
-        self.access_token = token_part_1 + token_part_2
-        print("DEBUG: Access token = {}".format(self.access_token))
-        self.session.headers['Authorization'] = 'Bearer ' + token_part_1
+        self.tokens = token_response.json()
+        access_token = self.tokens['access_token']
+        print("DEBUG: Access token = {}".format(access_token))
+        self.session.headers['Authorization']='Bearer ' + access_token
         print("session headers: {}".format(self.session.headers))
 
     def create_application(self):
-        pass
-    @staticmethod
-    def get_scopes_for_app(application):
-        return RestClient.APP_SCOPES[application]
+        try:
+            return self.application
+        except:
+            print("Haven't done DCR so far so continue . . .")
+        dcr_payload={
+            "callbackUrl": "www.knnect.com",
+            "clientName": "rest_api_publisher",
+            "owner": "admin",
+            "grantType": "password refresh_token",
+            "saasApp": True
+        }
+        dcr_endpoint=self.base_path + "/client-registration/v0.14/register".format(
+            host=default['connection']['hostname'], port=default['connection']['port'])
+        dcr_response=requests.post(
+            dcr_endpoint, json=dcr_payload, verify=self.verify, auth=("admin", "admin"))
+        print(dcr_response)
+        if dcr_response.ok:
+            self.application=dcr_response.json()
+            return self.application
+        else:
+            raise Exception("Something went wrong while doing DCR endpoint = {} \n payload = {} ".format(
+                dcr_endpoint, dcr_payload))
+
+    def get_scopes_for_app(self):
+        return RestClient.APP_SCOPES[self.application_name]
 
 
 # stuff to run always here such as class/def
