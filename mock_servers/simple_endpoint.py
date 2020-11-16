@@ -4,7 +4,8 @@ import base64
 import time
 try:
     import python_digest
-except ImportError:
+except ImportError as e:
+    print(e)
     print("WARN: Can't find python_digest module , Hence you won't able to use Digest Auth feature")
 from http import server, HTTPStatus
 import socketserver
@@ -14,7 +15,8 @@ from urllib.parse import urlparse, parse_qs
 import jwt
 from pprint import pprint
 from dicttoxml import dicttoxml
-from glob import glob # this is for serving any .pdf , .jpeg , .png etc media files
+from glob import glob  # this is for serving any .pdf , .jpeg , .png etc media files
+
 
 
 class EndpointHandler(server.BaseHTTPRequestHandler):
@@ -97,6 +99,23 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
 
         requested_origin = self.headers.get("Origin")
         self.send_header("Access-Control-Allow-Origin", requested_origin)
+        # --START-- Cache control headers for more info refer https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching
+        """
+        Sample POST fetch
+            fetch('http://localhost:8000/apis', {
+                method: 'POST',
+                cache: "default",
+                headers: {
+                'Accept': 'application/json',
+                'x-kasun': 'application/json',
+                'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({a: 1, b: 'Textual content'})
+            });
+        """
+        self.send_header("Cache-Control", "max-age=5")
+        self.send_header("ETag", "tmkasune1")
+
         self.send_header("Access-Control-Allow-Credentials", "true")
         self.send_header("Set-Cookie",
                          'tmkasun_sample="KasunThennakoon"; Path=/apis; HttpOnly; Domain=localhost')
@@ -108,6 +127,8 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
         for header in self.headers._headers:
             self.request_headers[header[0]] = header[1]
         response = self.formatResponsePayload()
+        self.send_header("Content-length", len(response))
+
         # print(response)
         self.end_headers()
         self.wfile.write(response)
@@ -146,14 +167,21 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
         else:
             formatted_response = str(response)
         formatted_response = str.encode(formatted_response)
-        if self.path.split('/')[-1].find('.') is not -1:
+        if self.path.split('/')[-1].find('.') != -1:
             file_name = self.path.split('/')[-1]
-            if file_name.find('?') is not -1:
+            if file_name.find('?') != -1:
                 file_name = file_name.split('?')[0]
             extention = file_name.split('.')[-1]
             files = glob('./resources/*.{}'.format(extention))
             if not len(files) == 0:
-                self.send_header("Content-type", "application/{}".format(extention))
+                if(extention == 'gz'):  # if request for gzip file for testing gzip compression and https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Encoding
+                    self.send_header("content-encoding", "gzip")
+                    self.send_header("Content-type", "application/json")
+                elif(extention == 'html'):
+                    self.send_header("Content-type", "text/xml")
+                else:
+                    self.send_header(
+                        "Content-type", "application/{}".format(extention))
                 with open(files[0], 'rb') as file_response:
                     formatted_response = file_response.read()
         else:
@@ -168,7 +196,7 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
         socketserver.TCPServer.allow_reuse_address = True
         httpd = socketserver.TCPServer(('', port), EndpointHandler)
         # cert_path = path.dirname(__file__) + 'youryourpemfile.pem'
-        cert_path = 'yourpemfile.pem'
+        cert_path = 'certificates/knnect.cert.pem'
         print("DEBUG: cert_path = " + cert_path)
         if EndpointHandler.secured:
             httpd.socket = ssl.wrap_socket(
@@ -205,7 +233,8 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
                 request_body += line
             self.body = request_body[:-1]
             return self.body
-        self.body = None if content_length in [0, -1] else self.rfile.read(content_length).decode("UTF-8")
+        self.body = None if content_length in [
+            0, -1] else self.rfile.read(content_length).decode("UTF-8")
         return self.body
 
     def getDigestAuth(self):
@@ -245,7 +274,8 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
             return jwt.decode(jwt_header, public_key.read(), verify=False)
 
     port = 8000
-    secured = False
+    secured = True
+    protocol_version = 'HTTP/1.1'
     digestAuthSecret = 'this()is+my#s3cR3a1i4'
 
 

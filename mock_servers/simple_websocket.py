@@ -39,11 +39,13 @@ async def simpleWS(websocket, path):
 
 
 def main():
+    host = "localhost"
+    port = 8005
     print("Starting simple Websocket Server")
-    start_server = websockets.serve(simpleWS, 'localhost', 8005, create_protocol=SimpleServer)
+    start_server = websockets.serve(simpleWS, host, port, create_protocol=SimpleServer)
     asyncio.get_event_loop().run_until_complete(start_server)
+    print("Simple Websocket Server started!\nURL => ws://{host}:{port}".format(host=host, port=port))
     asyncio.get_event_loop().run_forever()
-    print("Simple Websocket Server started!")
 
 
 if __name__ == '__main__':
