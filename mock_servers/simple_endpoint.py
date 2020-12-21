@@ -12,11 +12,16 @@ import socketserver
 import ssl
 from os import path
 from urllib.parse import urlparse, parse_qs
-import jwt
+try:
+    import jwt
+except ImportError as e:
+    print("WARN: Can't find jwt module , Hence you won't able to use JWT decode feature")
 from pprint import pprint
-from dicttoxml import dicttoxml
+try:
+    from dicttoxml import dicttoxml
+except ImportError as e:
+    print("WARN: Can't find dicttoxml module , Hence you won't able to use Application XML responses feature")
 from glob import glob  # this is for serving any .pdf , .jpeg , .png etc media files
-
 
 
 class EndpointHandler(server.BaseHTTPRequestHandler):

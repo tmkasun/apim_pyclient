@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
-import http
+import ssl
 import websockets
 from websockets import WebSocketServerProtocol
 
@@ -9,11 +9,14 @@ from websockets import WebSocketServerProtocol
 """
 http://websockets.readthedocs.io/en/stable/deployment.html#port-sharing
 """
+
+
 class SimpleServer(WebSocketServerProtocol):
     async def process_request(self, path, request_headers):
         print("TMKASUN:WS:HANDSHAKE:HTTP <<<< path ={path}".format(path=path))
         for name in request_headers:
-            print("TMKASUN:WS:HANDSHAKE:HTTP <<<< {name} ---- {header}".format(name=name, header=request_headers[name]))
+            print("TMKASUN:WS:HANDSHAKE:HTTP <<<< {name} ---- {header}".format(
+                name=name, header=request_headers[name]))
         # return http.HTTPStatus.SWITCHING_PROTOCOLS, [], b'OK\n'
         return None
 
@@ -39,12 +42,24 @@ async def simpleWS(websocket, path):
 
 
 def main():
+    secured = False
     host = "localhost"
     port = 8005
-    print("Starting simple Websocket Server")
-    start_server = websockets.serve(simpleWS, host, port, create_protocol=SimpleServer)
+    ssl_context = None
+    scheme = "ws"
+    if secured:
+        scheme = "wss"
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        cert_path = 'certificates/public.crt'
+        ssl_context.load_cert_chain(cert_path)
+        print("Starting simple Websocket Server with TLS")
+    else:
+        print("Starting simple Websocket Server")
+    start_server = websockets.serve(
+        simpleWS, host, port, create_protocol=SimpleServer, ssl=ssl_context)
     asyncio.get_event_loop().run_until_complete(start_server)
-    print("Simple Websocket Server started!\nURL => ws://{host}:{port}".format(host=host, port=port))
+    print("Simple Websocket Server started!\nURL => {scheme}://{host}:{port}".format(
+        host=host, port=port, scheme=scheme))
     asyncio.get_event_loop().run_forever()
 
 
