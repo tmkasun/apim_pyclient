@@ -25,6 +25,7 @@ from glob import glob  # this is for serving any .pdf , .jpeg , .png etc media f
 
 
 class EndpointHandler(server.BaseHTTPRequestHandler):
+    counter = 0
     def do_GET(self):
         self.common_handler()
 
@@ -56,16 +57,19 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
         #   Add domain to Access-Control-Allow-Origin response header
         self.send_header("Access-Control-Allow-Headers", requested_headers)
         self.send_header("Access-Control-Allow-Methods", requested_methods)
+        self.send_header("Access-Control-Allow-Credentials", "true")
         self.send_header("Access-Control-Max-Age", 86400)
         # Pseudo code
         # If requested_headers in safelisted-request-headers #https://fetch.spec.whatwg.org/#cors-safelisted-request-header
         # Append header to Access-Control-Allow-Headers header value
+        self.send_header("Content-length", 0)
         self.end_headers()
         request_headers = {}
         for header in self.headers._headers:
             request_headers[header[0]] = header[1]
         print(request_headers)
-        self.wfile.write(b"")
+        close_chunk = '0\r\n\r\n'
+        self.wfile.write(close_chunk.encode(encoding='utf-8'))
 
     """
       - 1xx: Informational - Request received, continuing process
@@ -79,15 +83,20 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
         valid request
     """
 
-    def setStatusCode(self):
+    def setStatusCode(self, code=HTTPStatus.OK):
         # self.send_response(HTTPStatus.FORBIDDEN)
         # self.send_response(HTTPStatus.BAD_REQUEST)
-        self.send_response(HTTPStatus.OK)
+        # self.send_response(HTTPStatus.OK)
+        self.send_response(code)
 
     def common_handler(self):
         self.body = False
         self.delayResponse()
-        self.setStatusCode()
+        if EndpointHandler.counter % 2 == 0:
+            self.setStatusCode(HTTPStatus.UNAUTHORIZED)
+        else:
+            self.setStatusCode()
+        EndpointHandler.counter += 1
         # print(self.path)
         auth_params = self.decodeAuthHeader()
         """
@@ -199,7 +208,7 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
         print('INFO: (Secured: {})Mock Endpoint Server listening on localhost:{}...'.format(EndpointHandler.secured,
                                                                                             port))
         socketserver.TCPServer.allow_reuse_address = True
-        httpd = socketserver.TCPServer(('', port), EndpointHandler)
+        httpd = server.ThreadingHTTPServer(('', port), EndpointHandler)
         # cert_path = path.dirname(__file__) + 'youryourpemfile.pem'
         cert_path = 'certificates/knnect.cert.pem'
         print("DEBUG: cert_path = " + cert_path)
@@ -278,8 +287,8 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
         with open(pub_key_path, 'r') as public_key:
             return jwt.decode(jwt_header, public_key.read(), verify=False)
 
-    port = 8000
-    secured = True
+    port = 8080
+    secured = False
     protocol_version = 'HTTP/1.1'
     digestAuthSecret = 'this()is+my#s3cR3a1i4'
 
