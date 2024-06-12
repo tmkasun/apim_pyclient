@@ -42,6 +42,13 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
         self.send_header("Content-type", "text/event-stream")
         self.send_header("Cache-Control", "no-cache")
         self.send_header("Connection", "keep-alive")
+        self.send_header("Access-Control-Allow-Origin", '*')
+        # Pseudo code
+        # If requested_origin in allowed origin(s) or in configuration:
+        #   Add domain to Access-Control-Allow-Origin response header
+        self.send_header("Access-Control-Allow-Headers", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, PATCH, PUT, OPTIONS")
+        self.send_header("Access-Control-Allow-Credentials", "true")
         self.end_headers()
         queries = parse_qs(urlparse(self.path).query)
         delay_time = queries.get("sleep")
