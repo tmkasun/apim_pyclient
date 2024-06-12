@@ -2,6 +2,7 @@
 import json
 import base64
 import time
+import requests
 try:
     import python_digest
 except ImportError as e:
@@ -174,6 +175,21 @@ class EndpointHandler(server.BaseHTTPRequestHandler):
             'body': self.getBody(),
             'auth': self.decodeAuthHeader()
         }
+        if self.getBody():
+            r_body = json.loads(self.body)
+            # pprint(r_body)
+            subscribe_url = r_body["SubscribeURL"]
+            pprint(subscribe_url)
+            autoSubscribe = False
+            if autoSubscribe:
+                r = requests.get(subscribe_url)
+                print(r.status_code)
+                if r.status_code != 200:
+                    print("Auto subscription failed!")
+        else:
+            print("No body or Something went wrong!!!")
+        print("\n---- Headers ----\n")
+        pprint(self.request_headers)
         if "application/json" in self.response_content_type.lower():
             formatted_response = json.dumps(response)
         elif "application/xml" in self.response_content_type.lower():
